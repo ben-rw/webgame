@@ -11,9 +11,6 @@ import (
 //go:embed app/room/index.html
 var roomHTMLTemplate string
 
-//go:embed app/room/pico.min.css
-var roomCSS string
-
 type Room struct {
 	ID      string
 	Players []*Player
@@ -80,6 +77,10 @@ func generateRoomID() string {
 
 // parses url for roomID, creates player with player.Host set to false, adds player to room.Players, redirects to /room/{roomID}
 func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
+
+	//TODO - need to check that a player with the same name isn't already in the room
+	//Scores need to be stored in a way that a player who disconnects and reconnects doesn't lose their points
+
 	err := r.ParseForm()
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "unable to parse form", err)
