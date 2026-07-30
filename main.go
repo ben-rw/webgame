@@ -33,7 +33,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", noCacheMiddleware(landingServer))
+	mux.Handle("GET /", noCacheMiddleware(landingServer))
 
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
