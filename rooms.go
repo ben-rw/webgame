@@ -11,6 +11,9 @@ import (
 //go:embed app/room/index.html
 var roomHTMLTemplate string
 
+//go:embed app/room/pico.min.css
+var roomCSS string
+
 type Room struct {
 	ID      string
 	Players []*Player
@@ -117,8 +120,17 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 // parses url for roomID, serves room page html at /room/{roomID}
-func (cgf *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) {
+func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
+
+	roomID = strings.ToUpper(roomID)
+	cfg.mu.RLock()
+	_, ok := cfg.activeRooms[roomID]
+	cfg.mu.RUnlock()
+	if !ok {
+		respondWithError(w, http.StatusBadRequest, "no active rooms with that room code", nil)
+		return
+	}
 
 	roomHTML := fmt.Sprintf(roomHTMLTemplate, roomID)
 
