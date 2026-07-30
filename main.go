@@ -34,8 +34,7 @@ func main() {
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
 
-	roomHandler := http.FileServer(http.Dir(fmt.Sprintf("%v/app/room/", filepathRoot)))
-	mux.Handle("GET /room/{roomID}", roomHandler)
+	mux.HandleFunc("GET /room/{roomID}", cfg.handlerServeRoomPage)
 
 	server := http.Server{
 		Addr:    ":" + port,

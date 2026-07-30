@@ -1,11 +1,15 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strings"
 )
+
+//go:embed app/room/index.html
+var roomHTMLTemplate string
 
 type Room struct {
 	ID      string
@@ -110,4 +114,14 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("%v is joining room %v\n", name, roomID)
 
 	http.Redirect(w, r, roomUrl, http.StatusSeeOther)
+}
+
+// parses url for roomID, serves room page html at /room/{roomID}
+func (cgf *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) {
+	roomID := r.PathValue("roomID")
+
+	roomHTML := fmt.Sprintf(roomHTMLTemplate, roomID)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(roomHTML))
 }
