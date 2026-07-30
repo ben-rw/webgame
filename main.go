@@ -1,35 +1,39 @@
 package main
 
 import (
-	"fmt"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/joho/godotenv"
 )
 
-func main() {
-	const port = "8080"
-	const filepathRoot = "."
-	var rootURL string = fmt.Sprintf("http://localhost:%s/", port)
+//go:embed app/landing
+var landingContent embed.FS
 
+func main() {
 	godotenv.Load()
 
 	cfg := config{
-		Port:         port,
-		FilepathRoot: filepathRoot,
-		RootURL:      rootURL,
+		Port:         os.Getenv("PORT"),
+		FilepathRoot: os.Getenv("FILEPATH_ROOT"),
+		URLRoot:      os.Getenv("URL_ROOT"),
 		mu:           &sync.RWMutex{},
 		activeRooms:  map[string]*Room{},
 	}
 
+	landingFS, err := fs.Sub(landingContent, "app/landing")
+	if err != nil {
+		log.Fatal(err)
+	}
+	landingServer := http.FileServer(http.FS(landingFS))
+
 	mux := http.NewServeMux()
 
-	mux.Handle("/", noCacheMiddleware(http.FileServer(http.Dir(filepathRoot))))
-
-	assetsHandler := http.StripPrefix("/assets/", http.FileServer(http.Dir(filepathRoot)))
-	mux.Handle("/assets/", noCacheMiddleware(assetsHandler))
+	mux.Handle("/", noCacheMiddleware(landingServer))
 
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
@@ -37,10 +41,10 @@ func main() {
 	mux.HandleFunc("GET /room/{roomID}", cfg.handlerServeRoomPage)
 
 	server := http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + cfg.Port,
 		Handler: mux,
 	}
 
-	log.Printf("Serving on: %s\n", rootURL)
+	log.Printf("Serving on: %s%s/\n", cfg.URLRoot, cfg.Port)
 	log.Fatal(server.ListenAndServe())
 }

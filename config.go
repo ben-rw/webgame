@@ -10,7 +10,7 @@ import (
 type config struct {
 	Port         string
 	FilepathRoot string
-	RootURL      string
+	URLRoot      string
 	mu           *sync.RWMutex
 	activeRooms  map[string]*Room
 }
