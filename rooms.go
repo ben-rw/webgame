@@ -59,10 +59,10 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	cfg.activeRooms[roomID] = &room
 	cfg.mu.Unlock()
 
-	newUrl := cfg.RootURL + "room/" + roomID
-	fmt.Printf("Creating new room at %v for %v\n", newUrl, name)
+	newURL := cfg.URLRoot + cfg.Port + "/room/" + roomID
+	fmt.Printf("Creating new room at %v for %v\n", newURL, name)
 
-	http.Redirect(w, r, newUrl, http.StatusSeeOther)
+	http.Redirect(w, r, newURL, http.StatusSeeOther)
 }
 
 func generateRoomID() string {
@@ -99,7 +99,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roomUrl := cfg.RootURL + "room/" + roomID
+	roomURL := cfg.URLRoot + cfg.Port + "/room/" + roomID
 
 	player := Player{
 		Name:  name,
@@ -113,7 +113,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("%v is joining room %v\n", name, roomID)
 
-	http.Redirect(w, r, roomUrl, http.StatusSeeOther)
+	http.Redirect(w, r, roomURL, http.StatusSeeOther)
 }
 
 // parses url for roomID, serves room page html at /room/{roomID}
