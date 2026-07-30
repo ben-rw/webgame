@@ -26,10 +26,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", http.FileServer(http.Dir(filepathRoot)))
+	mux.Handle("/", noCacheMiddleware(http.FileServer(http.Dir(filepathRoot))))
 
 	assetsHandler := http.StripPrefix("/assets/", http.FileServer(http.Dir(filepathRoot)))
-	mux.Handle("/assets/", assetsHandler)
+	mux.Handle("/assets/", noCacheMiddleware(assetsHandler))
 
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
