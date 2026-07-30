@@ -1,20 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+        <link rel="stylesheet" href="css/pico.red.min.css">
+        <link rel="stylesheet" href="css/style.css">
+  </head>
   <body>
     <h1>Webgame!</h1>
-    <h3>Join a Room</h3>
     <form action="/room/join" method="post" id="joinForm">
+        <label for="name">Name</label>
         <input type="text" id="name" name="username">
-            <label for="name">Name</label><br>
+        <label for="room code">Room Code</label>
         <input type="text" id="room code" name="roomID">
-            <label for="room code">Room Code</label><br>
         <button type="submit">Join Room</button>
     </form>
     <br>
-    <h3>Create a Room</h3>
     <form action="/room" method="post" id="createForm">
+        <label for="name">Name</label>
         <input type="text" id="name" name="username">
-            <label for="name">Name</label><br>
         <button type="submit">Create Room</button>
     </form>
   </body>
