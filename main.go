@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//go:embed app/landing
+//go:embed frontend/landing
 var landingContent embed.FS
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 		activeRooms:  map[string]*Room{},
 	}
 
-	landingFS, err := fs.Sub(landingContent, "app/landing")
+	landingFS, err := fs.Sub(landingContent, "frontend/landing")
 	if err != nil {
 		log.Fatal(err)
 	}

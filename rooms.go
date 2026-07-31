@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//go:embed app/room/index.html
+//go:embed frontend/room/index.html
 var roomHTMLTemplate string
 
 type Room struct {
