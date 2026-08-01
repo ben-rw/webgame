@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 	"sync"
@@ -13,6 +14,7 @@ type config struct {
 	URLRoot      string
 	mu           *sync.RWMutex
 	activeRooms  map[string]*Room
+	templates    *template.Template
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {

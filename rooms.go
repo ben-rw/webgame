@@ -8,9 +8,6 @@ import (
 	"strings"
 )
 
-//go:embed frontend/room/index.html
-var roomHTMLTemplate string
-
 type Room struct {
 	ID      string
 	Players []*Player
@@ -133,8 +130,13 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	roomHTML := fmt.Sprintf(roomHTMLTemplate, roomID)
+	err := cfg.templates.ExecuteTemplate(w, "room.html", roomID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "unable to serve room page", err)
+	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(roomHTML))
+	// roomHTML := fmt.Sprintf(roomHTMLTemplate, roomID)
+	//
+	// w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// w.Write([]byte(roomHTML))
 }

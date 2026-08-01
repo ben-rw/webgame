@@ -1,21 +1,23 @@
 package main
 
 import (
-	"embed"
-	"io/fs"
+	// "io/fs"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 
+	"github.com/ben-rw/webgame/frontend"
 	"github.com/joho/godotenv"
 )
 
-//go:embed frontend/landing
-var landingContent embed.FS
-
 func main() {
 	godotenv.Load()
+
+	templates, err := frontend.LoadTemplates()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	cfg := config{
 		Port:         os.Getenv("PORT"),
@@ -23,17 +25,25 @@ func main() {
 		URLRoot:      os.Getenv("URL_ROOT"),
 		mu:           &sync.RWMutex{},
 		activeRooms:  map[string]*Room{},
+		templates:    templates,
 	}
 
-	landingFS, err := fs.Sub(landingContent, "frontend/landing")
-	if err != nil {
-		log.Fatal(err)
-	}
-	landingServer := http.FileServer(http.FS(landingFS))
+	// landingFS, err := fs.Sub(LandingContent, "frontend/landing")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// landingServer := http.FileServer(http.FS(landingFS))
 
 	mux := http.NewServeMux()
 
-	mux.Handle("GET /", noCacheMiddleware(landingServer))
+	// mux.Handle("GET /", noCacheMiddleware(landingServer))
+	landingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := cfg.templates.ExecuteTemplate(w, "index.html", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+	mux.Handle("GET /", noCacheMiddleware(landingHandler))
 
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
