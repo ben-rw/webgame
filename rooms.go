@@ -134,9 +134,4 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to serve room page", err)
 	}
-
-	// roomHTML := fmt.Sprintf(roomHTMLTemplate, roomID)
-	//
-	// w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// w.Write([]byte(roomHTML))
 }

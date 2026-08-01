@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "io/fs"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -28,22 +28,15 @@ func main() {
 		templates:    templates,
 	}
 
-	// landingFS, err := fs.Sub(LandingContent, "frontend/landing")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// landingServer := http.FileServer(http.FS(landingFS))
-
 	mux := http.NewServeMux()
 
-	// mux.Handle("GET /", noCacheMiddleware(landingServer))
-	landingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := cfg.templates.ExecuteTemplate(w, "index.html", nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-	})
-	mux.Handle("GET /", noCacheMiddleware(landingHandler))
+	mux.Handle("GET /{$}", noCacheMiddleware(http.HandlerFunc(cfg.handlerServeLandingPage)))
+
+	staticFS, err := fs.Sub(frontend.FS, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	mux.HandleFunc("POST /room", cfg.handlerCreateRoom)
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
