@@ -56,10 +56,9 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	cfg.activeRooms[roomID] = &room
 	cfg.mu.Unlock()
 
-	newURL := cfg.URLRoot + cfg.Port + "/room/" + roomID
-	fmt.Printf("Creating new room at %v for %v\n", newURL, name)
+	fmt.Printf("Creating new room at %v for %v\n", "/room/"+roomID, name)
 
-	http.Redirect(w, r, newURL, http.StatusSeeOther)
+	http.Redirect(w, r, "/room/"+roomID, http.StatusSeeOther)
 }
 
 func generateRoomID() string {
@@ -100,8 +99,6 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roomURL := cfg.URLRoot + cfg.Port + "/room/" + roomID
-
 	player := Player{
 		Name:  name,
 		Score: 0,
@@ -114,12 +111,13 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("%v is joining room %v\n", name, roomID)
 
-	http.Redirect(w, r, roomURL, http.StatusSeeOther)
+	http.Redirect(w, r, "/room/"+roomID, http.StatusSeeOther)
 }
 
 // parses url for roomID, serves room page html at /room/{roomID}
 func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
+	fmt.Printf("roomID: %v\n", roomID)
 
 	roomID = strings.ToUpper(roomID)
 	cfg.mu.RLock()

@@ -48,6 +48,6 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Serving on: %s%s/\n", cfg.URLRoot, cfg.Port)
+	log.Printf("Serving on: %s:%s/\n", cfg.URLRoot, cfg.Port)
 	log.Fatal(server.ListenAndServe())
 }
