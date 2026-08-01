@@ -11,6 +11,7 @@ css_color_options/
 *.dll
 *.so
 *.dylib
+*.wasm
 
 # Test binary, built with `go test -c`
 *.test
