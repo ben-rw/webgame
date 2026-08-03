@@ -17,13 +17,16 @@ type Room struct {
 func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "unable to parse form", err)
+		http.Error(w, "unable to parse form", http.StatusBadRequest)
 		return
 	}
 
 	name := r.FormValue("username")
 	if name == "" {
-		respondWithError(w, http.StatusBadRequest, "player must provide a username", nil)
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{CreateUsernameError: "player must provide a username"})
+		if err != nil {
+			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -79,13 +82,16 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "unable to parse form", err)
+		http.Error(w, "unable to parse form", http.StatusBadRequest)
 		return
 	}
 
 	name := r.FormValue("username")
 	if name == "" {
-		respondWithError(w, http.StatusBadRequest, "player must provide a username", nil)
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinUsernameError: "player must provide a username"})
+		if err != nil {
+			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -95,7 +101,10 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 	_, ok := cfg.activeRooms[roomID]
 	cfg.mu.RUnlock()
 	if !ok {
-		respondWithError(w, http.StatusBadRequest, "no active rooms with that room code", nil)
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active rooms with that room code"})
+		if err != nil {
+			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -124,12 +133,12 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 	_, ok := cfg.activeRooms[roomID]
 	cfg.mu.RUnlock()
 	if !ok {
-		respondWithError(w, http.StatusBadRequest, "no active rooms with that room code", nil)
+		http.Error(w, "unable to serve room page: unregistered room code", http.StatusInternalServerError)
 		return
 	}
 
 	err := cfg.templates.ExecuteTemplate(w, "room.html", roomID)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "unable to serve room page", err)
+		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 	}
 }

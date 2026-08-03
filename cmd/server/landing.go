@@ -4,10 +4,16 @@ import (
 	"net/http"
 )
 
+type LandingPageError struct {
+	JoinUsernameError   string
+	JoinCodeError       string
+	CreateUsernameError string
+}
+
 func (cfg *config) handlerServeLandingPage(w http.ResponseWriter, r *http.Request) {
-	err := cfg.templates.ExecuteTemplate(w, "landing.html", nil)
+	err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "couldn't load landing page template", err)
+		http.Error(w, "couldn't load landing page template", http.StatusInternalServerError)
 		return
 	}
 }
