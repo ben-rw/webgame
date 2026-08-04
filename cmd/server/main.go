@@ -42,6 +42,7 @@ func main() {
 	mux.HandleFunc("POST /room/join", cfg.handlerJoinRoom)
 
 	mux.HandleFunc("GET /room/{roomID}", cfg.handlerServeRoomPage)
+	mux.HandleFunc("GET /room/test", cfg.handlerServeTestRoom)
 
 	server := http.Server{
 		Addr:    ":" + cfg.Port,

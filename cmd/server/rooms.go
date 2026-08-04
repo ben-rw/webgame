@@ -142,3 +142,10 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 	}
 }
+
+func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) {
+	err := cfg.templates.ExecuteTemplate(w, "room.html", nil)
+	if err != nil {
+		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
+	}
+}
