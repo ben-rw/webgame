@@ -1,6 +1,6 @@
 package main
 
-type Player struct {
+type Client struct {
 	Name  string
 	Score int
 	Host  bool

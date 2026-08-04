@@ -10,10 +10,10 @@ import (
 
 type Room struct {
 	ID      string
-	Players []*Player
+	Clients []*Client
 }
 
-// generates 4 letter code for room, sets creating player as host, redirects user to room at /room/{roomID}
+// generates 4 letter code for room, sets creating client as host, redirects user to room at /room/{roomID}
 func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -23,7 +23,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	name := r.FormValue("username")
 	if name == "" {
-		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{CreateUsernameError: "player must provide a username"})
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{CreateUsernameError: "client must provide a username"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
 		}
@@ -44,7 +44,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	host := Player{
+	host := Client{
 		Name:  name,
 		Score: 0,
 		Host:  true,
@@ -52,7 +52,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	room := Room{
 		ID:      roomID,
-		Players: []*Player{&host},
+		Clients: []*Client{&host},
 	}
 
 	cfg.mu.Lock()
@@ -74,11 +74,11 @@ func generateRoomID() string {
 	return string(buf)
 }
 
-// parses url for roomID, creates player with player.Host set to false, adds player to room.Players, redirects to /room/{roomID}
+// parses url for roomID, creates client with client.Host set to false, adds client to room.Clients, redirects to /room/{roomID}
 func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
-	//TODO - need to check that a player with the same name isn't already in the room
-	//Scores need to be stored in a way that a player who disconnects and reconnects doesn't lose their points
+	//TODO - need to check that a client with the same name isn't already in the room
+	//Scores need to be stored in a way that a client who disconnects and reconnects doesn't lose their points
 
 	err := r.ParseForm()
 	if err != nil {
@@ -108,14 +108,14 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player := Player{
+	client := Client{
 		Name:  name,
 		Score: 0,
 		Host:  false,
 	}
 
 	cfg.mu.Lock()
-	cfg.activeRooms[roomID].Players = append(cfg.activeRooms[roomID].Players, &player)
+	cfg.activeRooms[roomID].Clients = append(cfg.activeRooms[roomID].Clients, &client)
 	cfg.mu.Unlock()
 
 	fmt.Printf("%v is joining room %v\n", name, roomID)
