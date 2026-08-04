@@ -3,6 +3,7 @@ module github.com/ben-rw/webgame
 go 1.25.1
 
 require (
+	github.com/coder/websocket v1.8.15 // indirect
 	github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.9.0 // indirect

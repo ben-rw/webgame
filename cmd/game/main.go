@@ -87,6 +87,8 @@ func main() {
 	ebiten.SetWindowTitle("Baby Yayga")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
+	connectToWebsocket()
+
 	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/character_template/16x16/16x16 Idle-Sheet.png")
 	if err != nil {
 		log.Fatal(err)
