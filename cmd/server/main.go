@@ -23,9 +23,11 @@ func main() {
 		Port:         os.Getenv("PORT"),
 		FilepathRoot: os.Getenv("FILEPATH_ROOT"),
 		URLRoot:      os.Getenv("URL_ROOT"),
-		mu:           &sync.RWMutex{},
-		activeRooms:  map[string]*Room{},
-		templates:    templates,
+		RoomReg: RoomRegistry{
+			mu:          &sync.RWMutex{},
+			activeRooms: map[string]*Room{},
+		},
+		templates: templates,
 	}
 
 	mux := http.NewServeMux()

@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type Room struct {
-	ID      string
-	Clients []*Client
-}
-
 // generates 4 letter code for room, sets creating client as host, redirects user to room at /room/{roomID}
 func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -34,11 +29,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	var roomID string
 	for {
 		roomID = generateRoomID()
-
-		cfg.mu.RLock()
-		_, ok := cfg.activeRooms[roomID]
-		cfg.mu.RUnlock()
-
+		_, ok := cfg.RoomReg.Get(roomID)
 		if !ok {
 			break
 		}
@@ -55,9 +46,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		Clients: []*Client{&host},
 	}
 
-	cfg.mu.Lock()
-	cfg.activeRooms[roomID] = &room
-	cfg.mu.Unlock()
+	cfg.RoomReg.Set(roomID, &room)
 
 	fmt.Printf("Creating new room at %v for %v\n", "/room/"+roomID, name)
 
@@ -97,9 +86,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomID := r.FormValue("roomID")
 	roomID = strings.ToUpper(roomID)
-	cfg.mu.RLock()
-	_, ok := cfg.activeRooms[roomID]
-	cfg.mu.RUnlock()
+	_, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
 		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active rooms with that room code"})
 		if err != nil {
@@ -114,9 +101,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		Host:  false,
 	}
 
-	cfg.mu.Lock()
-	cfg.activeRooms[roomID].Clients = append(cfg.activeRooms[roomID].Clients, &client)
-	cfg.mu.Unlock()
+	cfg.RoomReg.AppendClient(roomID, &client)
 
 	fmt.Printf("%v is joining room %v\n", name, roomID)
 
@@ -129,9 +114,7 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 	fmt.Printf("roomID: %v\n", roomID)
 
 	roomID = strings.ToUpper(roomID)
-	cfg.mu.RLock()
-	_, ok := cfg.activeRooms[roomID]
-	cfg.mu.RUnlock()
+	_, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
 		http.Error(w, "unable to serve room page: unregistered room code", http.StatusInternalServerError)
 		return
