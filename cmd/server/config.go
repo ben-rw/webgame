@@ -5,6 +5,12 @@ import (
 	"sync"
 )
 
+type Client struct {
+	Name  string
+	Score int
+	Host  bool
+}
+
 type Room struct {
 	ID      string
 	Clients []*Client
