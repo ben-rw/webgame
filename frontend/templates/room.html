@@ -1,3 +1,9 @@
 <!DOCTYPE html>
-<iframe src="/static/game.html?room={{.}}" allow="autoplay" width="1280" height="960"></iframe>
+<head>
+    <link rel="stylesheet" href="/static/css/room.css">
+</head>
+<body>
+    <iframe src="/static/game.html?room={{. | urlquery}}" allow="autoplay">
+  </iframe>
+</body>
 

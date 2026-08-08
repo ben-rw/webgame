@@ -54,7 +54,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(
 		g.player.Img.SubImage(
-			image.Rect(0, 0, 24, 24),
+			image.Rect(0, 0, 16, 16),
 		).(*ebiten.Image),
 		&opts,
 	)
@@ -66,7 +66,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		screen.DrawImage(
 			sprite.Img.SubImage(
-				image.Rect(0, 0, 24, 24),
+				image.Rect(0, 0, 16, 16),
 			).(*ebiten.Image),
 			&opts,
 		)
@@ -78,18 +78,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
 // If you don't have to adjust the screen size with the outside size, just return a fixed size.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return outsideWidth, outsideHeight
 }
 
 func main() {
 	// Specify the window size as you like. Here, a doubled size is specified.
-	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Baby Yayga")
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	connectToWebsocket()
 
-	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/character_template/16x16/16x16 Idle-Sheet.png")
+	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/Inspector/SpriteSheet.png")
 	if err != nil {
 		log.Fatal(err)
 	}

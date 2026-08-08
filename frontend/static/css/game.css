@@ -1,0 +1,19 @@
+html {
+    overflow: auto;
+}
+
+html,
+body,
+div,
+canvas {
+    margin: 0px;
+    padding: 0px;
+    height: 100%;
+    border: none;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    border: none;
+}
