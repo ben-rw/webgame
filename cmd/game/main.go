@@ -86,7 +86,7 @@ func main() {
 
 	connectToWebsocket()
 
-	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/Inspector/SpriteSheet.png")
+	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/ninja_adventure/Actor/Character/Inspector/SpriteSheet.png")
 	if err != nil {
 		log.Fatal(err)
 	}
