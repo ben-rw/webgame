@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/ben-rw/webgame/frontend"
+	"github.com/ben-rw/webgame/internal/room"
 	"github.com/joho/godotenv"
 )
 
@@ -23,9 +24,9 @@ func main() {
 		Port:         os.Getenv("PORT"),
 		FilepathRoot: os.Getenv("FILEPATH_ROOT"),
 		URLRoot:      os.Getenv("URL_ROOT"),
-		RoomReg: RoomRegistry{
-			mu:          &sync.RWMutex{},
-			activeRooms: map[string]*Room{},
+		RoomReg: room.RoomRegistry{
+			Mu:          &sync.RWMutex{},
+			ActiveRooms: map[string]*room.Room{},
 		},
 		templates: templates,
 	}
