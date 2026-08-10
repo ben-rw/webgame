@@ -1,11 +1,17 @@
 package room
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/coder/websocket"
+)
 
 type Client struct {
 	Name  string
 	Score int
 	Host  bool
+	Room  *Room
+	Conn  *websocket.Conn
 }
 
 type Room struct {

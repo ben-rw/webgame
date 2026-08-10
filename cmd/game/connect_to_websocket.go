@@ -27,7 +27,6 @@ func connectToWebsocket() error {
 
 	msg := protocol.JoinMessage{
 		RoomID: roomID,
-		Name:   username,
 	}
 
 	err = wsjson.Write(ctx, conn, msg)
