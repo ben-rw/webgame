@@ -15,7 +15,9 @@ func connectToWebsocket() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	wsURL, roomID, username := getClientInfo()
+	prot, host, roomID, username := getClientInfo()
+
+	wsURL := prot + host + "/room/" + roomID + "/ws"
 
 	log.Println(wsURL, roomID, username)
 
@@ -38,7 +40,7 @@ func connectToWebsocket() error {
 }
 
 // returns websocketURL, roomID, username
-func getClientInfo() (string, string, string) {
+func getClientInfo() (string, string, string, string) {
 	loc := js.Global().Get("location")
 
 	protocol := "ws://"
@@ -51,5 +53,5 @@ func getClientInfo() (string, string, string) {
 	roomID := params.Call("get", "room").String()
 	username := params.Call("get", "name").String()
 
-	return protocol + host + "/room/" + roomID + "/ws", roomID, username
+	return protocol, host, roomID, username
 }
