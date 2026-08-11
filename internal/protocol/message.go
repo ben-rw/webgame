@@ -5,28 +5,32 @@ import (
 	"errors"
 )
 
-// "github.com/ben-rw/webgame/internal/room"
-
 type MessageType string
 
-const RoomState MessageType = "RoomState"
+const JoinRequest MessageType = "JoinRequest"
+const JoinResponse MessageType = "JoinResponse"
 
 type Message struct {
 	Type MessageType
 	Data json.RawMessage
 }
 
-type RoomStateData struct {
+type JoinRequestData struct {
+	RoomID string `json:"room_id"`
+}
+
+type JoinResponseData struct {
 	Username string `json:"username"`
-	RoomID   string `json:"room_id"`
 }
 
 func (m *Message) UnmarshalMessageData() (any, error) {
 	var v any
 
 	switch m.Type {
-	case RoomState:
-		v = &RoomStateData{}
+	case JoinRequest:
+		v = &JoinRequestData{}
+	case JoinResponse:
+		v = &JoinResponseData{}
 	default:
 		return nil, errors.New("unrecognized message format")
 	}
