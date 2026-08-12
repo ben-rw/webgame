@@ -1,22 +1,29 @@
 package room
 
 import (
+	"errors"
 	"sync"
 
+	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/coder/websocket"
 )
 
+type Player struct {
+	Name   string
+	Score  int
+	Host   bool
+	Client *Client
+}
+
 type Client struct {
-	Name  string
-	Score int
-	Host  bool
-	Room  *Room
-	Conn  *websocket.Conn
+	*websocket.Conn
+	messages chan protocol.Message
+	Player   *Player
 }
 
 type Room struct {
 	ID      string
-	Clients []Client
+	Players []*Player
 }
 
 type RoomRegistry struct {
@@ -42,8 +49,29 @@ func (r *RoomRegistry) Set(roomID string, room *Room) {
 	r.Mu.Unlock()
 }
 
-func (r *RoomRegistry) AppendClient(roomID string, client Client) {
+func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) (string, error) {
+	_, ok := r.Get(roomID)
+	if !ok {
+		return "", errors.New("room with that id doesn't exist")
+	}
+
 	r.Mu.Lock()
-	r.ActiveRooms[roomID].Clients = append(r.ActiveRooms[roomID].Clients, client)
+	player.Name = nameCollisionSolver(player.Name, r.ActiveRooms[roomID].Players)
+	r.ActiveRooms[roomID].Players = append(r.ActiveRooms[roomID].Players, player)
 	r.Mu.Unlock()
+
+	return player.Name, nil
+}
+
+func (r *RoomRegistry) GetPlayerList(roomID string) ([]*Player, error) {
+	_, ok := r.Get(roomID)
+	if !ok {
+		return []*Player{}, errors.New("room with that id doesn't exist")
+	}
+
+	r.Mu.RLock()
+	players := make([]*Player, len(r.ActiveRooms[roomID].Players))
+	_ = copy(players, r.ActiveRooms[roomID].Players)
+	r.Mu.RUnlock()
+	return players, nil
 }

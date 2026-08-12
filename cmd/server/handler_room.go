@@ -8,10 +8,9 @@ import (
 	"strings"
 
 	"github.com/ben-rw/webgame/internal/room"
-	"github.com/coder/websocket"
 )
 
-// generates 4 letter code for room, sets creating client as host, redirects user to room at /room/{roomID}
+// generate 4 letter code for room, set creating player as host, redirect user to room at /room/{roomID}
 func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -21,7 +20,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	name := r.FormValue("username")
 	if name == "" {
-		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{CreateUsernameError: "client must provide a username"})
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{CreateUsernameError: "player must provide a username"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
 		}
@@ -40,19 +39,18 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	newRoom := room.Room{
 		ID:      roomID,
-		Clients: []room.Client{},
+		Players: []*room.Player{},
 	}
 
-	host := room.Client{
-		Name:  name,
-		Score: 0,
-		Host:  true,
-		Room:  &newRoom,
-		Conn:  &websocket.Conn{},
+	host := room.Player{
+		Name:   name,
+		Score:  0,
+		Host:   true,
+		Client: nil,
 	}
 
 	cfg.RoomReg.Set(roomID, &newRoom)
-	cfg.RoomReg.AppendClient(roomID, host)
+	cfg.RoomReg.AppendPlayer(roomID, &host)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
@@ -66,12 +64,8 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/room/"+roomID, http.StatusSeeOther)
 }
 
-// parses url for roomID, creates client with client.Host set to false, adds client to room.Clients, redirects to /room/{roomID}
+// parses url for roomID, creates Player with Player.Host set to false, adds Player to room.Players, redirects to /room/{roomID}
 func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
-
-	//TODO - need to check that a client with the same name isn't already in the room
-	//Scores need to be stored in a way that a client who disconnects and reconnects doesn't lose their points
-
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "unable to parse form", http.StatusBadRequest)
@@ -100,13 +94,17 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := room.Client{
+	Player := room.Player{
 		Name:  name,
 		Score: 0,
 		Host:  false,
 	}
 
-	cfg.RoomReg.AppendClient(roomID, client)
+	name, err = cfg.RoomReg.AppendPlayer(roomID, &Player)
+	if err != nil {
+		http.Error(w, "couldn't add player to room", http.StatusInternalServerError)
+		log.Printf("couldn't add player to room: %v", err)
+	}
 
 	fmt.Printf("%v is joining room %v\n", name, roomID)
 
