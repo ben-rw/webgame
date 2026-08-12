@@ -42,15 +42,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		Players: []*room.Player{},
 	}
 
-	host := room.Player{
-		Name:   name,
-		Score:  0,
-		Host:   true,
-		Client: nil,
-	}
-
 	cfg.RoomReg.Set(roomID, &newRoom)
-	cfg.RoomReg.AppendPlayer(roomID, &host)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
