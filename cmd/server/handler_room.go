@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -82,6 +83,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinUsernameError: "player must provide a username"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+			log.Printf("unable to serve room page with error message: %v", err)
 		}
 		return
 	}
@@ -90,9 +92,10 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 	roomID = strings.ToUpper(roomID)
 	_, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
-		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active rooms with that room code"})
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active room with that room code"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+			log.Printf("unable to serve room page with error message: %v\n", err)
 		}
 		return
 	}
@@ -132,6 +135,7 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 	err := cfg.templates.ExecuteTemplate(w, "room.html", roomID)
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
+		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
 	}
 }
 
@@ -139,5 +143,6 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 	err := cfg.templates.ExecuteTemplate(w, "room.html", nil)
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
+		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
 	}
 }
