@@ -10,7 +10,16 @@ import (
 	"github.com/coder/websocket/wsjson"
 )
 
+// get roomID + username, upgrade to websocket, register client to hub,
+// send username to client, start read loop, remove client when read loop returns
 func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
+	roomID := r.PathValue("roomID")
+	_, ok := cfg.RoomReg.Get(roomID)
+	if !ok {
+		http.Error(w, "no active room with that room code", http.StatusBadRequest)
+		return
+	}
+
 	userCookie, err := r.Cookie("username")
 	if err != nil {
 		http.Error(w, "missing user session data", http.StatusUnauthorized)
@@ -20,35 +29,45 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		// http.Error(w, "couldn't upgrade connection to websocket", http.StatusInternalServerError)
+		http.Error(w, "couldn't upgrade connection to websocket", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
-	defer conn.CloseNow()
+
+	playerNames, err := getPlayerNames(cfg, roomID)
+	if err != nil {
+		log.Println(err)
+	}
+
+	data := protocol.JoinResponseData{
+		Username:   userCookie.Value,
+		PlayerList: playerNames,
+	}
+
+	msg, err := protocol.MarshalToMessage(protocol.JoinResponse, data)
+	if err != nil {
+		log.Println(err)
+	}
 
 	ctx := context.Background()
-
-	var msgFromClient protocol.JoinMessage
-	err = wsjson.Read(ctx, conn, &msgFromClient)
+	err = wsjson.Write(ctx, conn, msg)
 	if err != nil {
-		// http.Error(w, "couldn't read from websocket connection", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
-	log.Printf("received: %v", msgFromClient)
+}
 
-	msgToClient := protocol.JoinResponse{
-		Username: userCookie.Value,
-	}
-	err = wsjson.Write(ctx, conn, &msgToClient)
+func getPlayerNames(cfg *config, roomID string) ([]string, error) {
+	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
 	if err != nil {
-		// http.Error(w, "couldn't write to websocket connection", http.StatusInternalServerError)
-		log.Println(err)
-		return
+		return []string{}, err
 	}
 
-	log.Printf("sent: %v", msgToClient)
+	nameList := make([]string, len(playerList))
+	for _, player := range playerList {
+		nameList = append(nameList, player.Name)
+	}
 
-	conn.Close(websocket.StatusNormalClosure, "")
+	return nameList, nil
 }

@@ -20,7 +20,8 @@ type JoinRequestData struct {
 }
 
 type JoinResponseData struct {
-	Username string `json:"username"`
+	Username   string   `json:"username"`
+	PlayerList []string `json:"player_list"`
 }
 
 func (m *Message) UnmarshalMessageData() (any, error) {
