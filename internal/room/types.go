@@ -17,7 +17,7 @@ type Player struct {
 
 type Client struct {
 	*websocket.Conn
-	messages chan protocol.Message
+	Messages chan protocol.Message
 	Player   *Player
 }
 
@@ -49,10 +49,10 @@ func (r *RoomRegistry) Set(roomID string, room *Room) {
 	r.Mu.Unlock()
 }
 
-func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) (string, error) {
+func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) error {
 	_, ok := r.Get(roomID)
 	if !ok {
-		return "", errors.New("room with that id doesn't exist")
+		return errors.New("room with that id doesn't exist")
 	}
 
 	r.Mu.Lock()
@@ -60,7 +60,33 @@ func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) (string, erro
 	r.ActiveRooms[roomID].Players = append(r.ActiveRooms[roomID].Players, player)
 	r.Mu.Unlock()
 
-	return player.Name, nil
+	return nil
+}
+
+func (r *RoomRegistry) RemovePlayer(roomID string, currentPlayer *Player) error {
+	_, ok := r.Get(roomID)
+	if !ok {
+		return errors.New("room with that id doesn't exist")
+	}
+
+	r.Mu.Lock()
+	var i int
+	var match bool
+	for index, player := range r.ActiveRooms[roomID].Players {
+		if player == currentPlayer {
+			i = index
+			match = true
+			break
+		}
+	}
+	if !match {
+		return errors.New("player not found")
+	}
+
+	r.ActiveRooms[roomID].Players = append(r.ActiveRooms[roomID].Players[:i], r.ActiveRooms[roomID].Players[i+1:]...)
+	r.Mu.Unlock()
+
+	return nil
 }
 
 func (r *RoomRegistry) GetPlayerList(roomID string) ([]*Player, error) {
