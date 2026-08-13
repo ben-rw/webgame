@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/coder/websocket/wsjson"
+	"log"
 	"sync"
 )
 
@@ -78,24 +79,24 @@ func (r *RoomRegistry) GetPlayerList(roomID string) ([]*Player, error) {
 	}
 
 	r.Mu.RLock()
-	players := make([]*Player, len(r.ActiveRooms[roomID].Players))
-	_ = copy(players, r.ActiveRooms[roomID].Players)
+	playerList := make([]*Player, len(r.ActiveRooms[roomID].Players))
+	_ = copy(playerList, r.ActiveRooms[roomID].Players)
 	r.Mu.RUnlock()
-	return players, nil
+	return playerList, nil
 }
 
-func (rr *RoomRegistry) Broadcast(msg *protocol.Message, roomID string) error {
-	playerList, err := rr.GetPlayerList(roomID)
-	if err != nil {
-		return err
-	}
+func (r *RoomRegistry) Broadcast(msg *protocol.Message, room *Room) {
+	r.Mu.RLock()
+	playerList := make([]*Player, len(room.Players))
+	_ = copy(playerList, room.Players)
+	r.Mu.RUnlock()
+
 	for _, player := range playerList {
 		if player.Client != nil {
 			err := wsjson.Write(context.Background(), player.Client.Conn, msg)
 			if err != nil {
-				return err
+				log.Println(err)
 			}
 		}
 	}
-	return nil
 }
