@@ -37,12 +37,13 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	newRoom := room.Room{
+	newRoom := &room.Room{
 		ID:      roomID,
 		Players: []*room.Player{},
+		Scene:   "lobby",
 	}
 
-	cfg.RoomReg.Set(roomID, &newRoom)
+	cfg.RoomReg.Set(roomID, newRoom)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
@@ -86,23 +87,25 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Player := room.Player{
+	player := room.Player{
 		Name:  name,
 		Score: 0,
 		Host:  false,
 	}
 
-	name, err = cfg.RoomReg.AppendPlayer(roomID, &Player)
+	err = cfg.RoomReg.AppendPlayer(roomID, &player)
 	if err != nil {
 		http.Error(w, "couldn't add player to room", http.StatusInternalServerError)
 		log.Printf("couldn't add player to room: %v", err)
 	}
 
-	fmt.Printf("%v is joining room %v\n", name, roomID)
+	// use player.Name instead of name
+	// player.Name is mutated in place during .AppendPlayer call in case of a name collision
+	fmt.Printf("%v is joining room %v\n", player.Name, roomID)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
-		Value:    name,
+		Value:    player.Name,
 		Path:     "/",
 		HttpOnly: true,
 	})
@@ -126,6 +129,7 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
+		return
 	}
 }
 
@@ -134,5 +138,6 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
+		return
 	}
 }

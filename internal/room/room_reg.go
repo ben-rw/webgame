@@ -32,6 +32,7 @@ func (r *RoomRegistry) Set(roomID string, room *Room) {
 	r.Mu.Unlock()
 }
 
+// check room exists, check for username collisions, set player.Room, add playe to RoomReg
 func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) error {
 	_, ok := r.Get(roomID)
 	if !ok {
@@ -40,6 +41,7 @@ func (r *RoomRegistry) AppendPlayer(roomID string, player *Player) error {
 
 	r.Mu.Lock()
 	player.Name = nameCollisionSolver(player.Name, r.ActiveRooms[roomID].Players)
+	player.Room = r.ActiveRooms[roomID]
 	r.ActiveRooms[roomID].Players = append(r.ActiveRooms[roomID].Players, player)
 	r.Mu.Unlock()
 

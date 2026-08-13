@@ -7,6 +7,10 @@ import (
 )
 
 func ValidateMessage(msg *protocol.Message, scene room.SceneType) (*protocol.Message, error) {
-	log.Printf("validated msg: %v, scene: %v", msg, scene)
+	data, err := msg.UnmarshalMessageData()
+	if err != nil {
+		return &protocol.Message{}, err
+	}
+	log.Printf("validated msg data: %v, scene: %v", data, scene)
 	return msg, nil
 }

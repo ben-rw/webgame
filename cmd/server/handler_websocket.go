@@ -87,6 +87,7 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 			Name:   username,
 			Score:  0,
 			Host:   host,
+			Room:   cfg.RoomReg.ActiveRooms[roomID],
 			Client: &client,
 		}
 		err = cfg.RoomReg.AppendPlayer(roomID, player)
@@ -126,9 +127,6 @@ func readLoop(r *room.RoomRegistry, c *room.Client) {
 			continue
 		} else {
 			r.Broadcast(updateMsg, c.Player.Room)
-			if err != nil {
-				log.Printf("server: error broadcasting to clients")
-			}
 		}
 	}
 
