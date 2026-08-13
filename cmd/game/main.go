@@ -1,119 +1,46 @@
 package main
 
 import (
-	"image"
-	"image/color"
 	_ "image/png"
 	"log"
 
-	"github.com/ben-rw/webgame/cmd/game/internal/scenes/menu"
+	"github.com/ben-rw/webgame/cmd/game/internal/scenes/lobby"
+	"github.com/ben-rw/webgame/cmd/game/internal/ws"
+	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Sprite struct {
-	Img  *ebiten.Image
-	X, Y float64
+type Scene interface {
+	Update(messages []protocol.Message) error
+	Draw(screen *ebiten.Image)
 }
 
-// Game implements ebiten.Game interface.
 type Game struct {
-	player  *Sprite
-	sprites []*Sprite
+	Conn  *ws.Connection
+	Scene Scene
 }
 
-// Update proceeds the game state.
-// Update is called every tick (1/60 [s] by default).
 func (g *Game) Update() error {
-	// Write your game's logical update.
-	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		g.player.X += 2
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		g.player.X -= 2
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		g.player.Y -= 2
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		g.player.Y += 2
-	}
-
-	return nil
+	return g.Scene.Update(g.Conn.Check())
 }
 
-// Draw draws the game screen.
-// Draw is called every frame (typically 1/60[s] for 60Hz display).
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Write your game's rendering.
-
-	screen.Fill(color.RGBA{120, 180, 255, 255})
-
-	opts := ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(g.player.X, g.player.Y)
-
-	screen.DrawImage(
-		g.player.Img.SubImage(
-			image.Rect(0, 0, 16, 16),
-		).(*ebiten.Image),
-		&opts,
-	)
-
-	opts.GeoM.Reset()
-
-	for _, sprite := range g.sprites {
-		opts.GeoM.Translate(sprite.X, sprite.Y)
-
-		screen.DrawImage(
-			sprite.Img.SubImage(
-				image.Rect(0, 0, 16, 16),
-			).(*ebiten.Image),
-			&opts,
-		)
-
-		opts.GeoM.Reset()
-	}
+	g.Scene.Draw(screen)
 }
 
-// Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
-// If you don't have to adjust the screen size with the outside size, just return a fixed size.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth, outsideHeight
+	return 320, 180
 }
 
 func main() {
-	// Specify the window size as you like. Here, a doubled size is specified.
-
-	connectToWebsocket()
-
-	playerImg, _, err := ebitenutil.NewImageFromFileSystem(menu.AssetsFS, "assets/images/ninja_adventure/Actor/Character/Inspector/SpriteSheet.png")
+	conn, err := ws.ConnectToWebsocket()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	game := &Game{
-		player: &Sprite{
-			Img: playerImg,
-			X:   50.0,
-			Y:   50.0,
-		},
-		sprites: []*Sprite{
-			{
-				Img: playerImg,
-				X:   100.0,
-				Y:   100.0,
-			},
-			{
-				Img: playerImg,
-				X:   150.0,
-				Y:   150.0,
-			},
-			{
-				Img: playerImg,
-				X:   75.0,
-				Y:   75.0,
-			},
-		},
+		Conn:  conn,
+		Scene: lobby.New(),
 	}
 
 	if err := ebiten.RunGame(game); err != nil {

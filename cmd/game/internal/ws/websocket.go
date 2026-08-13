@@ -1,4 +1,4 @@
-package main
+package ws
 
 import (
 	"context"
@@ -49,7 +49,6 @@ func (c *Connection) readLoop() {
 		}
 		select {
 		case c.messages <- msg:
-			log.Printf("received msg: %v", msg)
 		default:
 			log.Println("buffer full: dropped a message")
 		}

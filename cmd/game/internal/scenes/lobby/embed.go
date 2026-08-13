@@ -1,4 +1,4 @@
-package menu
+package lobby
 
 import (
 	"embed"

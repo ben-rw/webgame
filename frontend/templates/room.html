@@ -3,7 +3,7 @@
     <link rel="stylesheet" href="/static/css/room.css">
 </head>
 <body>
-    <iframe src="/static/game.html?room={{.RoomID | urlquery}}&name={{.Username | urlquery}}" allow="autoplay">
+    <iframe src="/static/game.html?room={{. | urlquery}}" allow="autoplay">
   </iframe>
 </body>
 
