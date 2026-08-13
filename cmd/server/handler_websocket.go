@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ben-rw/webgame/internal/minigames"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/ben-rw/webgame/internal/room"
 	"github.com/coder/websocket"
@@ -72,10 +73,8 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msgs := make(chan protocol.Message, 100)
 	client := room.Client{
-		Conn:     conn,
-		Messages: msgs,
+		Conn: conn,
 	}
 
 	var player *room.Player
@@ -115,16 +114,18 @@ func readLoop(c *room.Client) {
 				c.Close(websocket.StatusNormalClosure, "connection closed normally")
 				return
 			} else {
-				log.Printf("wsjson read error: %v\n", err)
-				log.Println("terminating read loop")
+				log.Printf("server: wsjson read error: %v\n", err)
+				log.Println("server: terminating read loop")
 				return
 			}
 		}
-		select {
-		case c.Messages <- msg:
-			log.Printf("received msg: %v", msg)
-		default:
-			log.Println("buffer full: dropped a message")
+
+		updateMsg, err := minigames.ValidateMessage(&msg, c.Player.Room.Scene)
+		if err != nil {
+			log.Println(err)
+			continue
+		} else {
+			c.Player.Room.Broadcast(updateMsg)
 		}
 	}
 
