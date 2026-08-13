@@ -7,8 +7,11 @@ import (
 
 type MessageType string
 
-const JoinRequest MessageType = "JoinRequest"
-const JoinResponse MessageType = "JoinResponse"
+const (
+	JoinRequest  MessageType = "JoinRequest"
+	JoinResponse MessageType = "JoinResponse"
+	SceneChange  MessageType = "SceneChange"
+)
 
 type Message struct {
 	Type MessageType
@@ -24,6 +27,10 @@ type JoinResponseData struct {
 	PlayerList []string `json:"player_list"`
 }
 
+type SceneChangeData struct {
+	Scene string
+}
+
 func (m *Message) UnmarshalMessageData() (any, error) {
 	var v any
 
@@ -32,6 +39,8 @@ func (m *Message) UnmarshalMessageData() (any, error) {
 		v = &JoinRequestData{}
 	case JoinResponse:
 		v = &JoinResponseData{}
+	case SceneChange:
+		v = &SceneChangeData{}
 	default:
 		return nil, errors.New("unrecognized message format")
 	}
