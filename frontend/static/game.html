@@ -2,10 +2,24 @@
 <head>
     <link rel="stylesheet" href="/static/css/game.css">
 </head>
+<div id="start-overlay" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; cursor:default;">
+  Loading...
+</div>
 <script src="wasm_exec.js"></script>
 <script>
 const go = new Go();
+const overlay = document.getElementById("start-overlay");
+
 WebAssembly.instantiateStreaming(fetch("webgame.wasm"), go.importObject).then(result => {
-    go.run(result.instance);
+  go.run(result.instance);
+
+  overlay.textContent = "Click to start";
+  overlay.style.cursor = "pointer";
+  overlay.addEventListener("click", function () {
+    this.remove();
+    const canvas = document.querySelector("canvas");
+    canvas.tabIndex = -1;
+    canvas.focus();
+  }, { once: true });
 });
 </script>
