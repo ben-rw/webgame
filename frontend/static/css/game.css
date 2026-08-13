@@ -17,3 +17,25 @@ canvas {
     width: 100%;
     border: none;
 }
+
+@font-face {
+    font-family: "VT323-Regular";
+    src: url("/static/fonts/VT323-Regular.ttf");
+}
+
+@font-face {
+    font-family: "PressStart2P-Regular";
+    src: url("/static/fonts/PressStart2P-Regular.ttf");
+}
+
+#start-overlay {
+    font-family: "PressStart2P-Regular", system-ui;
+    font-size: 1.5rem;
+    color: white;
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:default;
+}

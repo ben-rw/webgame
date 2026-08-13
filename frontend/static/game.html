@@ -2,7 +2,7 @@
 <head>
     <link rel="stylesheet" href="/static/css/game.css">
 </head>
-<div id="start-overlay" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; cursor:default;">
+<div id="start-overlay">
   Loading...
 </div>
 <script src="wasm_exec.js"></script>
@@ -13,7 +13,7 @@ const overlay = document.getElementById("start-overlay");
 WebAssembly.instantiateStreaming(fetch("webgame.wasm"), go.importObject).then(result => {
   go.run(result.instance);
 
-  overlay.textContent = "Click to start";
+  overlay.textContent = "CLICK TO START!";
   overlay.style.cursor = "pointer";
   overlay.addEventListener("click", function () {
     this.remove();
