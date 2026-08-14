@@ -22,9 +22,15 @@ type JoinRequestData struct {
 	RoomID string `json:"room_id"`
 }
 
+type PlayerData struct {
+	Name  string
+	Score int
+	Host  bool
+}
+
 type JoinResponseData struct {
-	Username   string   `json:"username"`
-	PlayerList []string `json:"player_list"`
+	PlayerData *PlayerData `json:"player_data"`
+	PlayerList []*PlayerData
 }
 
 type SceneChangeData struct {

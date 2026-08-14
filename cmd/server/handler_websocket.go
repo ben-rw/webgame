@@ -37,48 +37,27 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playerNames, err := getPlayerNames(cfg, roomID)
+	client := room.Client{
+		Conn: conn,
+	}
+
+	playerDataList, err := getPlayerDataList(cfg, roomID)
 	if err != nil {
 		log.Println(err)
 	}
 
 	var host bool
-	if len(playerNames) == 0 {
+	if len(playerDataList) == 0 {
 		host = true
 	}
 
-	existingPlayer, err := checkForReconnect(cfg, roomID, username)
+	existingPlayer, exists, err := checkForReconnect(cfg, roomID, username)
 	if err != nil {
 		log.Println(err)
-	}
-
-	if existingPlayer == nil {
-		playerNames = append(playerNames, username)
-	}
-
-	data := protocol.JoinResponseData{
-		Username:   username,
-		PlayerList: playerNames,
-	}
-
-	msg, err := protocol.MarshalToMessage(protocol.JoinResponse, data)
-	if err != nil {
-		log.Println(err)
-	}
-
-	ctx := context.Background()
-	err = wsjson.Write(ctx, conn, msg)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	client := room.Client{
-		Conn: conn,
 	}
 
 	var player *room.Player
-	if existingPlayer != nil {
+	if exists {
 		existingPlayer.Client = &client
 		client.Player = existingPlayer
 		player = existingPlayer
@@ -95,6 +74,29 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 		client.Player = player
+	}
+
+	playerData := playerToPlayerData(player)
+
+	if !exists {
+		playerDataList = append(playerDataList, playerData)
+	}
+
+	data := protocol.JoinResponseData{
+		PlayerData: playerData,
+		PlayerList: playerDataList,
+	}
+
+	msg, err := protocol.MarshalToMessage(protocol.JoinResponse, data)
+	if err != nil {
+		log.Println(err)
+	}
+
+	ctx := context.Background()
+	err = wsjson.Write(ctx, conn, msg)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 
 	readLoop(&cfg.RoomReg, &client)
@@ -132,31 +134,39 @@ func readLoop(r *room.RoomRegistry, c *room.Client) {
 
 }
 
-func getPlayerNames(cfg *config, roomID string) ([]string, error) {
-	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
-	if err != nil {
-		return []string{}, err
-	}
-
-	nameList := make([]string, len(playerList))
-	for _, player := range playerList {
-		nameList = append(nameList, player.Name)
-	}
-
-	return nameList, nil
-}
-
-func checkForReconnect(cfg *config, roomID, username string) (*room.Player, error) {
+func getPlayerDataList(cfg *config, roomID string) ([]*protocol.PlayerData, error) {
 	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
 	if err != nil {
 		return nil, err
 	}
 
+	dataList := make([]*protocol.PlayerData, len(playerList))
+	for i, player := range playerList {
+		dataList[i] = playerToPlayerData(player)
+	}
+
+	return dataList, nil
+}
+
+func playerToPlayerData(player *room.Player) *protocol.PlayerData {
+	return &protocol.PlayerData{
+		Name:  player.Name,
+		Score: player.Score,
+		Host:  player.Host,
+	}
+}
+
+func checkForReconnect(cfg *config, roomID, username string) (*room.Player, bool, error) {
+	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
+	if err != nil {
+		return nil, false, err
+	}
+
 	for _, player := range playerList {
 		if player.Name == username {
-			return player, nil
+			return player, true, nil
 		}
 	}
 
-	return nil, nil
+	return nil, false, nil
 }
