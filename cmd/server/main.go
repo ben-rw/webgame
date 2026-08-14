@@ -48,6 +48,7 @@ func main() {
 	mux.HandleFunc("GET /room/test", cfg.handlerServeTestRoom)
 
 	mux.HandleFunc("GET /room/{roomID}/ws", cfg.handlerWebsocket)
+	mux.HandleFunc("GET /room/test/ws", cfg.handlerWebsocket)
 
 	server := http.Server{
 		Addr:    ":" + cfg.Port,
