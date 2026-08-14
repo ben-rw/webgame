@@ -10,9 +10,9 @@ import (
 )
 
 type Lobby struct {
-	Players []*Player
-	player  *Sprite
-	sprites []*Sprite
+	Players map[string]*Player
+	Player  *Player
+	Sprites []*Sprite
 }
 
 func New() *Lobby {
@@ -20,25 +20,56 @@ func New() *Lobby {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &Lobby{player: &Sprite{
-		Img: playerImg,
-		X:   50.0,
-		Y:   50.0,
-	}}
+
+	return &Lobby{
+		Players: map[string]*Player{},
+		Player:  NewPlayer(&protocol.PlayerData{}, playerImg),
+		Sprites: []*Sprite{},
+	}
 }
 
 func (l *Lobby) Update(messages []protocol.Message) error {
+	for _, message := range messages {
+		switch message.Type {
+		case protocol.JoinResponse:
+			joinResponseData, err := message.UnmarshalMessageData()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			data, ok := joinResponseData.(*protocol.JoinResponseData)
+			if !ok {
+				log.Println("failed type assertion")
+				continue
+			}
+
+			for _, playerData := range data.PlayerList {
+				if _, ok := l.Players[playerData.Name]; ok {
+					l.Players[playerData.Name].Data = playerData
+				} else {
+					//TODO: make player img selection from many random spritesheets
+					player := NewPlayer(playerData, l.Player.Img)
+					l.Players[playerData.Name] = player
+				}
+			}
+
+			l.Player = l.Players[data.PlayerData.Name]
+
+		case protocol.SceneChange:
+		}
+	}
+
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		l.player.X += 2
+		l.Player.X += 2
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		l.player.X -= 2
+		l.Player.X -= 2
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		l.player.Y -= 2
+		l.Player.Y -= 2
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		l.player.Y += 2
+		l.Player.Y += 2
 	}
 	return nil
 }
@@ -47,10 +78,10 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{120, 180, 255, 255})
 
 	opts := ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(l.player.X, l.player.Y)
+	opts.GeoM.Translate(l.Player.X, l.Player.Y)
 
 	screen.DrawImage(
-		l.player.Img.SubImage(
+		l.Player.Img.SubImage(
 			image.Rect(0, 0, 16, 16),
 		).(*ebiten.Image),
 		&opts,
@@ -58,7 +89,7 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 
 	opts.GeoM.Reset()
 
-	for _, sprite := range l.sprites {
+	for _, sprite := range l.Sprites {
 		opts.GeoM.Translate(sprite.X, sprite.Y)
 
 		screen.DrawImage(
