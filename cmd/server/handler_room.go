@@ -134,7 +134,44 @@ func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) {
-	err := cfg.templates.ExecuteTemplate(w, "room.html", nil)
+	roomID := "TEST"
+	username := "tester"
+
+	_, ok := cfg.RoomReg.Get(roomID)
+	if !ok {
+		newRoom := &room.Room{
+			ID:      roomID,
+			Players: []*room.Player{},
+			Scene:   "lobby",
+		}
+		cfg.RoomReg.Set(roomID, newRoom)
+		err := cfg.RoomReg.AppendPlayer(roomID, &room.Player{
+			Name:  username,
+			Score: 0,
+			Host:  true,
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		err := cfg.RoomReg.AppendPlayer(roomID, &room.Player{
+			Name:  username,
+			Score: 0,
+			Host:  false,
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "username",
+		Value:    username,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	err := cfg.templates.ExecuteTemplate(w, "room.html", "TEST")
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
