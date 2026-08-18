@@ -23,9 +23,10 @@ type JoinRequestData struct {
 }
 
 type PlayerData struct {
-	Name  string
-	Score int
-	Host  bool
+	Name        string
+	Score       int
+	Host        bool
+	SpriteIndex int
 }
 
 type JoinResponseData struct {

@@ -3,7 +3,7 @@ package lobby
 import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image"
 	"image/color"
 	"log"
@@ -16,14 +16,10 @@ type Lobby struct {
 }
 
 func New() *Lobby {
-	playerImg, _, err := ebitenutil.NewImageFromFileSystem(AssetsFS, "assets/images/ninja_adventure/Actor/Character/Inspector/SpriteSheet.png")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return &Lobby{
 		Players: map[string]*Player{},
-		Player:  NewPlayer(&protocol.PlayerData{}, playerImg),
+		Player:  NewPlayer(&protocol.PlayerData{}),
 		Sprites: []*Sprite{},
 	}
 }
@@ -47,8 +43,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 				if _, ok := l.Players[playerData.Name]; ok {
 					l.Players[playerData.Name].Data = playerData
 				} else {
-					//TODO: make player img selection from many random spritesheets
-					player := NewPlayer(playerData, l.Player.Img)
+					player := NewPlayer(playerData)
 					l.Players[playerData.Name] = player
 				}
 			}
@@ -89,7 +84,7 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 
 	opts.GeoM.Reset()
 
-	for _, sprite := range l.Sprites {
+	for _, sprite := range l.Players {
 		opts.GeoM.Translate(sprite.X, sprite.Y)
 
 		screen.DrawImage(

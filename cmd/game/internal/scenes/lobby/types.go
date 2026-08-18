@@ -3,6 +3,8 @@ package lobby
 import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"log"
 )
 
 type Player struct {
@@ -15,17 +17,24 @@ type Sprite struct {
 	X, Y float64
 }
 
-func NewPlayer(data *protocol.PlayerData, img *ebiten.Image) *Player {
+func NewPlayer(data *protocol.PlayerData) *Player {
+	imgPath := PlayerSpriteIndex[data.SpriteIndex]
+	playerImg, _, err := ebitenutil.NewImageFromFileSystem(AssetsFS, imgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &Player{
 		Sprite: &Sprite{
-			Img: img,
+			Img: playerImg,
 			X:   50,
 			Y:   50,
 		},
 		Data: &protocol.PlayerData{
-			Name:  data.Name,
-			Score: data.Score,
-			Host:  data.Host,
+			Name:        data.Name,
+			Score:       data.Score,
+			Host:        data.Host,
+			SpriteIndex: data.SpriteIndex,
 		},
 	}
 }

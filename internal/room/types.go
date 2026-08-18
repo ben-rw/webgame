@@ -4,18 +4,13 @@ import (
 	"github.com/coder/websocket"
 )
 
-type Room struct {
-	ID      string
-	Players []*Player
-	Scene   SceneType
-}
-
 type Player struct {
-	Name   string
-	Score  int
-	Host   bool
-	Room   *Room
-	Client *Client
+	Name        string
+	Score       int
+	Host        bool
+	SpriteIndex int
+	Room        *Room
+	Client      *Client
 }
 
 type Client struct {
