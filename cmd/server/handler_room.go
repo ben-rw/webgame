@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/ben-rw/webgame/internal/room"
 )
@@ -38,9 +39,11 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newRoom := &room.Room{
-		ID:      roomID,
-		Players: []*room.Player{},
-		Scene:   "lobby",
+		ID:                roomID,
+		Players:           []*room.Player{},
+		PlayerSpriteIndex: room.NewPlayerSpriteIndex(),
+		Scene:             "lobby",
+		Mu:                &sync.RWMutex{},
 	}
 
 	cfg.RoomReg.Set(roomID, newRoom)
@@ -65,8 +68,8 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := r.FormValue("username")
-	if name == "" {
+	username := r.FormValue("username")
+	if username == "" {
 		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinUsernameError: "player must provide a username"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
@@ -87,25 +90,9 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player := room.Player{
-		Name:  name,
-		Score: 0,
-		Host:  false,
-	}
-
-	err = cfg.RoomReg.AppendPlayer(roomID, &player)
-	if err != nil {
-		http.Error(w, "couldn't add player to room", http.StatusInternalServerError)
-		log.Printf("couldn't add player to room: %v", err)
-	}
-
-	// use player.Name instead of name
-	// player.Name is mutated in place during .AppendPlayer call in case of a name collision
-	fmt.Printf("%v is joining room %v\n", player.Name, roomID)
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
-		Value:    player.Name,
+		Value:    username,
 		Path:     "/",
 		HttpOnly: true,
 	})
@@ -137,27 +124,33 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 	roomID := "TEST"
 	username := "tester"
 
-	_, ok := cfg.RoomReg.Get(roomID)
+	currentRoom, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
+		psi := room.NewPlayerSpriteIndex()
 		newRoom := &room.Room{
-			ID:      roomID,
-			Players: []*room.Player{},
-			Scene:   "lobby",
+			ID:                roomID,
+			Players:           []*room.Player{},
+			Scene:             "lobby",
+			PlayerSpriteIndex: psi,
+			Mu:                &sync.RWMutex{},
 		}
 		cfg.RoomReg.Set(roomID, newRoom)
-		err := cfg.RoomReg.AppendPlayer(roomID, &room.Player{
-			Name:  username,
-			Score: 0,
-			Host:  true,
+
+		err := newRoom.AppendPlayer(&room.Player{
+			Name:        username,
+			Score:       0,
+			Host:        true,
+			SpriteIndex: newRoom.AssignPlayerSprite(),
 		})
 		if err != nil {
 			log.Println(err)
 		}
 	} else {
-		err := cfg.RoomReg.AppendPlayer(roomID, &room.Player{
-			Name:  username,
-			Score: 0,
-			Host:  false,
+		err := currentRoom.AppendPlayer(&room.Player{
+			Name:        username,
+			Score:       0,
+			Host:        false,
+			SpriteIndex: currentRoom.AssignPlayerSprite(),
 		})
 		if err != nil {
 			log.Println(err)

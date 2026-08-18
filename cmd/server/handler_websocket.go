@@ -22,6 +22,8 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currentRoom := cfg.RoomReg.ActiveRooms[roomID]
+
 	userCookie, err := r.Cookie("username")
 	if err != nil {
 		http.Error(w, "missing user session data", http.StatusUnauthorized)
@@ -41,7 +43,7 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		Conn: conn,
 	}
 
-	playerDataList, err := getPlayerDataList(cfg, roomID)
+	playerDataList, err := getPlayerDataList(currentRoom)
 	if err != nil {
 		log.Println(err)
 	}
@@ -51,7 +53,7 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		host = true
 	}
 
-	existingPlayer, exists, err := checkForReconnect(cfg, roomID, username)
+	existingPlayer, exists, err := checkForReconnect(currentRoom, username)
 	if err != nil {
 		log.Println(err)
 	}
@@ -63,13 +65,14 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		player = existingPlayer
 	} else {
 		player = &room.Player{
-			Name:   username,
-			Score:  0,
-			Host:   host,
-			Room:   cfg.RoomReg.ActiveRooms[roomID],
-			Client: &client,
+			Name:        username,
+			Score:       0,
+			Host:        host,
+			SpriteIndex: currentRoom.AssignPlayerSprite(),
+			Room:        currentRoom,
+			Client:      &client,
 		}
-		err = cfg.RoomReg.AppendPlayer(roomID, player)
+		err = currentRoom.AppendPlayer(player)
 		if err != nil {
 			log.Println(err)
 		}
@@ -99,12 +102,12 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readLoop(&cfg.RoomReg, &client)
+	readLoop(currentRoom, &client)
 	player.Client = nil
 }
 
 // read incoming messages, close dead connections, drop messages if buffer fills up
-func readLoop(r *room.RoomRegistry, c *room.Client) {
+func readLoop(r *room.Room, c *room.Client) {
 	defer c.Close(websocket.StatusInternalError, "connection closed unexpectedly")
 
 	msg := protocol.Message{}
@@ -128,14 +131,14 @@ func readLoop(r *room.RoomRegistry, c *room.Client) {
 			log.Println(err)
 			continue
 		} else {
-			r.Broadcast(updateMsg, c.Player.Room)
+			r.Broadcast(updateMsg)
 		}
 	}
 
 }
 
-func getPlayerDataList(cfg *config, roomID string) ([]*protocol.PlayerData, error) {
-	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
+func getPlayerDataList(r *room.Room) ([]*protocol.PlayerData, error) {
+	playerList, err := r.GetPlayerList()
 	if err != nil {
 		return nil, err
 	}
@@ -150,14 +153,15 @@ func getPlayerDataList(cfg *config, roomID string) ([]*protocol.PlayerData, erro
 
 func playerToPlayerData(player *room.Player) *protocol.PlayerData {
 	return &protocol.PlayerData{
-		Name:  player.Name,
-		Score: player.Score,
-		Host:  player.Host,
+		Name:        player.Name,
+		Score:       player.Score,
+		Host:        player.Host,
+		SpriteIndex: player.SpriteIndex,
 	}
 }
 
-func checkForReconnect(cfg *config, roomID, username string) (*room.Player, bool, error) {
-	playerList, err := cfg.RoomReg.GetPlayerList(roomID)
+func checkForReconnect(r *room.Room, username string) (*room.Player, bool, error) {
+	playerList, err := r.GetPlayerList()
 	if err != nil {
 		return nil, false, err
 	}
