@@ -118,7 +118,7 @@ func ConnectToWebsocket() (*Connection, error) {
 	}
 
 	incMsgs := make(chan protocol.Message, 20)
-	outMsgs := make(chan protocol.Message, 80)
+	outMsgs := make(chan protocol.Message, 20)
 	c := &Connection{
 		conn,
 		incMsgs,
