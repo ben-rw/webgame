@@ -12,7 +12,42 @@ import (
 
 type Connection struct {
 	*websocket.Conn
-	messages chan protocol.Message
+	incomingMsgs chan protocol.Message
+	outgoingMsgs chan protocol.Message
+}
+
+// marshal msgdata to Message, add to outgoingMsgs
+func (c *Connection) WriteMsg(mt protocol.MessageType, msgData any) {
+	msg, err := protocol.MarshalToMessage(mt, msgData)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	select {
+	case c.outgoingMsgs <- *msg:
+	default:
+		log.Println("write buffer full: dropped a message")
+	}
+}
+
+// write outgoingMsgs to server
+func (c *Connection) writeLoop() {
+	for {
+		msg := <-c.outgoingMsgs
+		err := wsjson.Write(context.Background(), c.Conn, msg)
+		if err != nil {
+			if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+				websocket.CloseStatus(err) == websocket.StatusGoingAway {
+				c.Close(websocket.StatusNormalClosure, "connection closed normally")
+				return
+			} else {
+				log.Printf("wsjson write error: %v\n", err)
+				log.Println("terminating write loop")
+				return
+			}
+		}
+	}
 }
 
 // check for messages to pass to Update in main
@@ -20,7 +55,7 @@ func (c *Connection) Check() []protocol.Message {
 	msgs := []protocol.Message{}
 	for {
 		select {
-		case msg := <-c.messages:
+		case msg := <-c.incomingMsgs:
 			msgs = append(msgs, msg)
 		default:
 			return msgs
@@ -48,9 +83,9 @@ func (c *Connection) readLoop() {
 			}
 		}
 		select {
-		case c.messages <- msg:
+		case c.incomingMsgs <- msg:
 		default:
-			log.Println("buffer full: dropped a message")
+			log.Println("read buffer full: dropped a message")
 		}
 	}
 
@@ -82,13 +117,16 @@ func ConnectToWebsocket() (*Connection, error) {
 		return nil, err
 	}
 
-	msgs := make(chan protocol.Message, 20)
+	incMsgs := make(chan protocol.Message, 20)
+	outMsgs := make(chan protocol.Message, 80)
 	c := &Connection{
 		conn,
-		msgs,
+		incMsgs,
+		outMsgs,
 	}
 
 	go c.readLoop()
+	go c.writeLoop()
 
 	return c, nil
 }
