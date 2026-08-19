@@ -21,7 +21,24 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	return g.Scene.Update(g.Conn.Check())
+	msgs := g.Conn.Check()
+	for _, msg := range msgs {
+		if msg.Type == protocol.SceneChange {
+			sceneChangeData, err := msg.UnmarshalMessageData()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			data, ok := sceneChangeData.(*protocol.SceneChangeData)
+			if !ok {
+				log.Println("failed type assertion")
+				continue
+			}
+			g.Scene = StartNewScene(data.Scene, g.Conn)
+		}
+	}
+
+	return g.Scene.Update(msgs)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -40,7 +57,7 @@ func main() {
 
 	game := &Game{
 		Conn:  conn,
-		Scene: lobby.New(),
+		Scene: lobby.New(conn),
 	}
 
 	if err := ebiten.RunGame(game); err != nil {
