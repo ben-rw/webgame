@@ -11,6 +11,7 @@ const (
 	JoinRequest  MessageType = "JoinRequest"
 	JoinResponse MessageType = "JoinResponse"
 	SceneChange  MessageType = "SceneChange"
+	PlayerUpdate MessageType = "PlayerUpdate"
 )
 
 type Message struct {
@@ -27,11 +28,17 @@ type PlayerData struct {
 	Score       int
 	Host        bool
 	SpriteIndex int
+	X           float64
+	Y           float64
 }
 
 type JoinResponseData struct {
 	PlayerData *PlayerData `json:"player_data"`
 	PlayerList []*PlayerData
+}
+
+type PlayerUpdateData struct {
+	PlayerData *PlayerData `json:"player_data"`
 }
 
 type SceneChangeData struct {
@@ -48,6 +55,8 @@ func (m *Message) UnmarshalMessageData() (any, error) {
 		v = &JoinResponseData{}
 	case SceneChange:
 		v = &SceneChangeData{}
+	case PlayerUpdate:
+		v = &PlayerUpdateData{}
 	default:
 		return nil, errors.New("unrecognized message format")
 	}
