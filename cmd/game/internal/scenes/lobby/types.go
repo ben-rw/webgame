@@ -1,6 +1,7 @@
 package lobby
 
 import (
+	"github.com/ben-rw/webgame/cmd/game/internal/assets"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -20,7 +21,7 @@ type Sprite struct {
 func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 	log.Printf("playerdata sprite index: %v", data.SpriteIndex)
 	imgPath := PlayerSpriteIndex[data.SpriteIndex]
-	playerImg, _, err := ebitenutil.NewImageFromFileSystem(AssetsFS, imgPath)
+	playerImg, _, err := ebitenutil.NewImageFromFileSystem(assets.AssetsFS, imgPath)
 	if err != nil {
 		log.Fatal(err)
 	}
