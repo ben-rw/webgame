@@ -13,7 +13,7 @@ const overlay = document.getElementById("start-overlay");
 WebAssembly.instantiateStreaming(fetch("webgame.wasm"), go.importObject).then(result => {
   go.run(result.instance);
 
-  overlay.textContent = "CLICK TO START!";
+  overlay.textContent = "CLICK TO JOIN!";
   overlay.style.cursor = "pointer";
   overlay.addEventListener("click", function () {
     this.remove();
