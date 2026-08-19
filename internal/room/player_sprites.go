@@ -1,6 +1,7 @@
 package room
 
 import (
+	"log"
 	"math/rand"
 )
 
@@ -18,6 +19,7 @@ func NewPlayerSpriteIndex() *[]int {
 // returns sprite index, remove index from playerSpriteIndex to avoid duplicates
 func (r *Room) AssignPlayerSprite() int {
 	i := rand.Intn(len(*r.PlayerSpriteIndex))
+	log.Printf("player sprite index: %v", i)
 
 	r.Mu.Lock()
 	s := *r.PlayerSpriteIndex
