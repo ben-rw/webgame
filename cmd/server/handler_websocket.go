@@ -127,14 +127,19 @@ func readLoop(r *room.Room, c *room.Client) {
 		}
 
 		updateMsg, err := minigames.ValidateMessage(&msg, c.Player.Room.Scene)
+		if updateMsg.Type != protocol.Unset {
+			log.Printf("msg: %v, updateMsg: %v", string(msg.Data), string(updateMsg.Data))
+		}
 		if err != nil {
-			log.Println(err)
+			log.Printf("updateMsg err: %v", err)
+			continue
+		} else if updateMsg.Type == protocol.Unset {
+			log.Println("message not broadcasted: empty message")
 			continue
 		} else {
 			r.Broadcast(updateMsg)
 		}
 	}
-
 }
 
 func getPlayerDataList(r *room.Room) ([]*protocol.PlayerData, error) {

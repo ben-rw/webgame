@@ -30,6 +30,7 @@ func New(c *ws.Connection) *Lobby {
 
 func (l *Lobby) Update(messages []protocol.Message) error {
 	for _, message := range messages {
+		log.Printf("msg type: %v", string(message.Type))
 		switch message.Type {
 		case protocol.JoinResponse:
 			joinResponseData, err := message.UnmarshalMessageData()
@@ -37,6 +38,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 				log.Println(err)
 				continue
 			}
+
 			data, ok := joinResponseData.(*protocol.JoinResponseData)
 			if !ok {
 				log.Println("failed type assertion")
@@ -54,6 +56,14 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 
 			l.Player = l.Players[data.PlayerData.Name]
 
+			log.Printf("player: %v", *l.Player.Data)
+
+			playerUpdateData := protocol.PlayerUpdateData{
+				PlayerData: l.Player.Data,
+			}
+
+			l.Conn.WriteMsg(protocol.PlayerUpdate, playerUpdateData)
+
 		case protocol.PlayerUpdate:
 			playerUpdateData, err := message.UnmarshalMessageData()
 			if err != nil {
@@ -65,7 +75,17 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 				log.Println("failed type assertion")
 				continue
 			}
-			l.Player = l.Players[data.PlayerData.Name]
+			log.Printf("playerlist: %v", l.Players)
+
+			if _, ok := l.Players[data.PlayerData.Name]; ok {
+				l.Players[data.PlayerData.Name].Data = data.PlayerData
+			} else {
+				player := NewPlayer(data.PlayerData, len(l.Players))
+				l.Players[data.PlayerData.Name] = player
+			}
+
+			l.Players[data.PlayerData.Name].Data = data.PlayerData
+			log.Printf("updated: %v", *l.Players[data.PlayerData.Name].Data)
 
 		default:
 		}
