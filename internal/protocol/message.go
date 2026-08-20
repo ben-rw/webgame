@@ -8,6 +8,7 @@ import (
 type MessageType string
 
 const (
+	Unset        MessageType = "Unset"
 	JoinRequest  MessageType = "JoinRequest"
 	JoinResponse MessageType = "JoinResponse"
 	SceneChange  MessageType = "SceneChange"
@@ -15,8 +16,8 @@ const (
 )
 
 type Message struct {
-	Type MessageType
-	Data json.RawMessage
+	Type MessageType     `json:"type"`
+	Data json.RawMessage `json:"data"`
 }
 
 type JoinRequestData struct {
@@ -24,12 +25,12 @@ type JoinRequestData struct {
 }
 
 type PlayerData struct {
-	Name        string
-	Score       int
-	Host        bool
-	SpriteIndex int
-	X           float64
-	Y           float64
+	Name        string  `json:"username"`
+	Score       int     `json:"score"`
+	Host        bool    `json:"host"`
+	SpriteIndex int     `json:"sprite_index"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
 }
 
 type JoinResponseData struct {
