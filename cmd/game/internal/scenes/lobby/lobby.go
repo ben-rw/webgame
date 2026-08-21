@@ -4,6 +4,7 @@ import (
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image"
@@ -138,5 +139,15 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 		)
 
 		opts.GeoM.Reset()
+	}
+
+	for _, player := range l.Players {
+		textOpts := text.DrawOptions{
+			LayoutOptions: player.NameTag.LayoutOptions,
+		}
+		textOpts.GeoM.Translate(player.NameTag.X, player.NameTag.Y)
+		text.Draw(screen, player.Data.Name, player.NameTag.Face, &textOpts)
+
+		textOpts.GeoM.Reset()
 	}
 }

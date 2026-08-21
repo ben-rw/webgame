@@ -19,17 +19,12 @@ canvas {
 }
 
 @font-face {
-    font-family: "VT323-Regular";
-    src: url("/static/fonts/VT323-Regular.ttf");
-}
-
-@font-face {
-    font-family: "PressStart2P-Regular";
-    src: url("/static/fonts/PressStart2P-Regular.ttf");
+    font-family: "pico-8-mono";
+    src: url("/static/fonts/pico-8-mono.otf");
 }
 
 #start-overlay {
-    font-family: "PressStart2P-Regular", system-ui;
+    font-family: "pico-8-mono", system-ui;
     font-size: 1.5rem;
     color: white;
     position:fixed;

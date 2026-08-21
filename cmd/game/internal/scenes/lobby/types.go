@@ -1,21 +1,34 @@
 package lobby
 
 import (
+	"log"
+
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"log"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+)
+
+const (
+	nameTagSize = 4
 )
 
 type Player struct {
 	*Sprite
-	Data *protocol.PlayerData
+	Data    *protocol.PlayerData
+	NameTag *NameTag
 }
 
 type Sprite struct {
 	Img  *ebiten.Image
 	X, Y float64
+}
+
+type NameTag struct {
+	Face          *text.GoTextFace
+	X, Y          float64
+	LayoutOptions text.LayoutOptions
 }
 
 func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
@@ -39,6 +52,17 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 			Score:       data.Score,
 			Host:        data.Host,
 			SpriteIndex: data.SpriteIndex,
+		},
+		NameTag: &NameTag{
+			Face: &text.GoTextFace{
+				Source: shared.FontSrc,
+				Size:   nameTagSize,
+			},
+			X: startPosition.X + shared.TileSize/2,
+			Y: startPosition.Y + shared.TileSize + 2,
+			LayoutOptions: text.LayoutOptions{
+				PrimaryAlign: 1,
+			},
 		},
 	}
 }
