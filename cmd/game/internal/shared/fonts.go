@@ -10,7 +10,7 @@ import (
 var FontSrc = getFontSrc()
 
 func getFontSrc() *text.GoTextFaceSource {
-	fontBytes, err := AssetsFS.ReadFile("assets/fonts/m3x6.ttf")
+	fontBytes, err := AssetsFS.ReadFile("assets/fonts/pico-8-mono.otf")
 	if err != nil {
 		log.Printf("error reading font file: %v", err)
 	}
