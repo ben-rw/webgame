@@ -9,6 +9,10 @@ import (
 	"sync"
 )
 
+const (
+	MaxPlayers = 8
+)
+
 type Room struct {
 	ID                string
 	Players           []*Player

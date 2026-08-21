@@ -8,6 +8,7 @@ type LandingPageError struct {
 	JoinUsernameError   string
 	JoinCodeError       string
 	CreateUsernameError string
+	JoinRoomFullError   string
 }
 
 func (cfg *config) handlerServeLandingPage(w http.ResponseWriter, r *http.Request) {

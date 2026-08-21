@@ -32,6 +32,14 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 	username := userCookie.Value
 
+	idCookie, err := r.Cookie("id")
+	if err != nil {
+		http.Error(w, "missing user session data", http.StatusUnauthorized)
+		log.Println(err)
+		return
+	}
+	id := idCookie.Value
+
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		http.Error(w, "couldn't upgrade connection to websocket", http.StatusInternalServerError)
@@ -53,7 +61,7 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		host = true
 	}
 
-	existingPlayer, exists, err := checkForReconnect(currentRoom, username)
+	existingPlayer, exists, err := checkForReconnect(currentRoom, id)
 	if err != nil {
 		log.Println(err)
 	}
@@ -65,6 +73,7 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		player = existingPlayer
 	} else {
 		player = &room.Player{
+			ID:          id,
 			Name:        username,
 			Score:       0,
 			Host:        host,
@@ -165,14 +174,14 @@ func playerToPlayerData(player *room.Player) *protocol.PlayerData {
 	}
 }
 
-func checkForReconnect(r *room.Room, username string) (*room.Player, bool, error) {
+func checkForReconnect(r *room.Room, id string) (*room.Player, bool, error) {
 	playerList, err := r.GetPlayerList()
 	if err != nil {
 		return nil, false, err
 	}
 
 	for _, player := range playerList {
-		if player.Name == username {
+		if player.ID == id {
 			return player, true, nil
 		}
 	}

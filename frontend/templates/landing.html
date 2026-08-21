@@ -14,16 +14,17 @@
             <input type="text" id="name" name="username" autocomplete="off" {{if .JoinUsernameError}}aria-invalid="true"{{end}}>
             {{if .JoinUsernameError}}<small>{{.JoinUsernameError}}</small>{{end}}
         <label for="room code">Room Code</label>
-        <input type="text" id="room code" name="roomID" autocomplete="off" {{if .JoinCodeError}}aria-invalid="true"{{end}}>
+        <input type="text" id="room code" name="roomID" autocomplete="off" {{if .JoinCodeError}}aria-invalid="true"{{end}} {{if .JoinRoomFullError}}aria-invalid="true"{{end}}>
             {{if .JoinCodeError}}<small>{{.JoinCodeError}}</small>{{end}}
-        <button type="submit">Join Room</button>
+            {{if .JoinRoomFullError}}<small>{{.JoinRoomFullError}}</small>{{end}}
+            <button type="submit"><span>Join Room</span></button>
     </form>
     <br>
     <form action="/room" method="post" id="createForm">
         <label for="name">Name</label>
         <input type="text" id="name" name="username" autocomplete="off" {{if .CreateUsernameError}}aria-invalid="true"{{end}}>
             {{if .CreateUsernameError}}<small>{{.CreateUsernameError}}</small>{{end}}
-        <button type="submit">Create Room</button>
+            <button type="submit"><span>Create Room</span></button>
     </form>
   </body>
 </html>

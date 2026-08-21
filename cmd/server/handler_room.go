@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/ben-rw/webgame/internal/room"
+	"github.com/google/uuid"
 )
 
 // generate 4 letter code for room, set creating player as host, redirect user to room at /room/{roomID}
@@ -55,6 +56,18 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
+	id, err := uuid.NewUUID()
+	if err != nil {
+		log.Printf("couldn't create uuid: %v", err)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "id",
+		Value:    id.String(),
+		Path:     "/",
+		HttpOnly: true,
+	})
+
 	fmt.Printf("Creating new room at %v for %v\n", "/room/"+roomID, name)
 
 	http.Redirect(w, r, "/room/"+roomID, http.StatusSeeOther)
@@ -80,9 +93,18 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomID := r.FormValue("roomID")
 	roomID = strings.ToUpper(roomID)
-	_, ok := cfg.RoomReg.Get(roomID)
+	currentRoom, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
 		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active room with that room code"})
+		if err != nil {
+			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
+			log.Printf("unable to serve room page with error message: %v\n", err)
+		}
+		return
+	}
+
+	if len(currentRoom.Players) >= room.MaxPlayers {
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinRoomFullError: "room is full"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
 			log.Printf("unable to serve room page with error message: %v\n", err)
@@ -93,6 +115,18 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "username",
 		Value:    username,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	id, err := uuid.NewUUID()
+	if err != nil {
+		log.Printf("couldn't create uuid: %v", err)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "id",
+		Value:    id.String(),
 		Path:     "/",
 		HttpOnly: true,
 	})
@@ -124,6 +158,11 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 	roomID := "TEST"
 	username := "tester"
 
+	id, err := uuid.NewUUID()
+	if err != nil {
+		log.Printf("couldn't create uuid: %v", err)
+	}
+
 	currentRoom, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
 		psi := room.NewPlayerSpriteIndex()
@@ -137,6 +176,7 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 		cfg.RoomReg.Set(roomID, newRoom)
 
 		err := newRoom.AppendPlayer(&room.Player{
+			ID:          id.String(),
 			Name:        username,
 			Score:       0,
 			Host:        true,
@@ -147,6 +187,7 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 		}
 	} else {
 		err := currentRoom.AppendPlayer(&room.Player{
+			ID:          id.String(),
 			Name:        username,
 			Score:       0,
 			Host:        false,
@@ -164,7 +205,14 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 		HttpOnly: true,
 	})
 
-	err := cfg.templates.ExecuteTemplate(w, "room.html", "TEST")
+	http.SetCookie(w, &http.Cookie{
+		Name:     "id",
+		Value:    id.String(),
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	err = cfg.templates.ExecuteTemplate(w, "room.html", "TEST")
 	if err != nil {
 		http.Error(w, "unable to serve room page: couldn't execute template", http.StatusInternalServerError)
 		log.Printf("unable to serve room page: couldn't execute template: %v\n", err)
