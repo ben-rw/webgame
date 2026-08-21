@@ -10,10 +10,10 @@
   <body>
     <h1>Webgame!</h1>
     <form action="/room/join" method="post" id="joinForm">
-        <label for="name">Name</label>
+            <label for="name"><span>Name</span></label>
             <input type="text" id="name" name="username" autocomplete="off" {{if .JoinUsernameError}}aria-invalid="true"{{end}}>
             {{if .JoinUsernameError}}<small>{{.JoinUsernameError}}</small>{{end}}
-        <label for="room code">Room Code</label>
+        <label for="room code"><span>Room Code</span></label>
         <input type="text" id="room code" name="roomID" autocomplete="off" {{if .JoinCodeError}}aria-invalid="true"{{end}} {{if .JoinRoomFullError}}aria-invalid="true"{{end}}>
             {{if .JoinCodeError}}<small>{{.JoinCodeError}}</small>{{end}}
             {{if .JoinRoomFullError}}<small>{{.JoinRoomFullError}}</small>{{end}}
@@ -21,7 +21,7 @@
     </form>
     <br>
     <form action="/room" method="post" id="createForm">
-        <label for="name">Name</label>
+        <label for="name"><span>Name</span></label>
         <input type="text" id="name" name="username" autocomplete="off" {{if .CreateUsernameError}}aria-invalid="true"{{end}}>
             {{if .CreateUsernameError}}<small>{{.CreateUsernameError}}</small>{{end}}
             <button type="submit"><span>Create Room</span></button>

@@ -1,10 +1,22 @@
 @font-face {
-    font-family: "m3x6";
-    src: url("/static/fonts/m3x6.ttf");
+    font-family: "PressStart2P-Regular";
+    src: url("/static/fonts/PressStart2P-Regular.ttf");
 }
 
-label, p, h1, span {
-    font-family: "m3x6", system-ui;
+h1 {
+    font-family: "PressStart2P-Regular", system-ui;
+    font-size: 48px;
+
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+}
+
+span {
+    font-family: "PressStart2P-Regular", system-ui;
+    font-size: 16px;
+
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
 }
 
 form {
