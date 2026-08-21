@@ -95,7 +95,7 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 	roomID = strings.ToUpper(roomID)
 	currentRoom, ok := cfg.RoomReg.Get(roomID)
 	if !ok {
-		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no active room with that room code"})
+		err := cfg.templates.ExecuteTemplate(w, "landing.html", LandingPageError{JoinCodeError: "no room with that code"})
 		if err != nil {
 			http.Error(w, "unable to serve room page with error message", http.StatusInternalServerError)
 			log.Printf("unable to serve room page with error message: %v\n", err)
