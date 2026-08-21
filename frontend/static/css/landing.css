@@ -1,0 +1,30 @@
+@font-face {
+    font-family: "m3x6";
+    src: url("/static/fonts/m3x6.ttf");
+}
+
+label, p, h1, span {
+    font-family: "m3x6", system-ui;
+}
+
+form {
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+
+    box-sizing: border-box;
+    padding: 5px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    text-align: center;
+}
+
+h1 {
+    background-color: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    border: 1px solid var(--pico-primary-border, transparent);
+    text-align: center;
+    padding: 0.5rem 1rem;
+    margin-bottom: 2rem;
+}
