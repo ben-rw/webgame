@@ -17,7 +17,7 @@ type Room struct {
 	ID                string
 	Players           []*Player
 	PlayerSpriteIndex *[]int
-	Scene             SceneType
+	Scene             protocol.SceneType
 	Mu                *sync.RWMutex
 }
 

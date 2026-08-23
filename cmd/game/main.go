@@ -35,7 +35,7 @@ func (g *Game) Update() error {
 				log.Println("failed type assertion")
 				continue
 			}
-			g.Scene = StartNewScene(data.Scene, g.Conn)
+			g.Scene = StartNewScene(data.SceneType, g.Conn)
 		}
 	}
 

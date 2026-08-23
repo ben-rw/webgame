@@ -42,8 +42,16 @@ type PlayerUpdateData struct {
 	PlayerData *PlayerData `json:"player_data"`
 }
 
+type SceneType int
+
+const (
+	RandomScene SceneType = iota
+	LobbyScene
+	MemoryScene
+)
+
 type SceneChangeData struct {
-	Scene string
+	SceneType SceneType
 }
 
 func (m *Message) UnmarshalMessageData() (any, error) {

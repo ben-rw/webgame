@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/ben-rw/webgame/internal/room"
 	"github.com/google/uuid"
 )
@@ -43,7 +44,7 @@ func (cfg *config) handlerCreateRoom(w http.ResponseWriter, r *http.Request) {
 		ID:                roomID,
 		Players:           []*room.Player{},
 		PlayerSpriteIndex: room.NewPlayerSpriteIndex(),
-		Scene:             "lobby",
+		Scene:             protocol.LobbyScene,
 		Mu:                &sync.RWMutex{},
 	}
 
@@ -169,7 +170,7 @@ func (cfg *config) handlerServeTestRoom(w http.ResponseWriter, r *http.Request) 
 		newRoom := &room.Room{
 			ID:                roomID,
 			Players:           []*room.Player{},
-			Scene:             "lobby",
+			Scene:             protocol.LobbyScene,
 			PlayerSpriteIndex: psi,
 			Mu:                &sync.RWMutex{},
 		}

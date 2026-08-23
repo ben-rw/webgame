@@ -3,14 +3,12 @@ package minigames
 import (
 	// "errors"
 	"github.com/ben-rw/webgame/internal/protocol"
-	"github.com/ben-rw/webgame/internal/room"
 	"log"
 )
 
-func ValidateMessage(msg *protocol.Message, scene room.SceneType) (*protocol.Message, error) {
+func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol.Message, error) {
 	var data any
 	if msg.Type == protocol.PlayerUpdate {
-		log.Println("1")
 		// playerUpdateData, err := msg.UnmarshalMessageData()
 		// if err != nil {
 		// 	return &protocol.Message{}, err
