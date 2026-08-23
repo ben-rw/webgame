@@ -19,8 +19,7 @@ type Lobby struct {
 	Sprites []*Sprite
 }
 
-func New(c *ws.Connection) *Lobby {
-
+func NewLobby(c *ws.Connection) *Lobby {
 	return &Lobby{
 		Conn:    c,
 		Players: map[string]*Player{},

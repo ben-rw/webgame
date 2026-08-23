@@ -58,7 +58,7 @@ func main() {
 
 	game := &Game{
 		Conn:  conn,
-		Scene: lobby.New(conn),
+		Scene: lobby.NewLobby(conn),
 	}
 
 	if err := ebiten.RunGame(game); err != nil {
