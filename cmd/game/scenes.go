@@ -10,9 +10,9 @@ import (
 func StartNewScene(scene string, c *ws.Connection) Scene {
 	switch scene {
 	case "lobby":
-		return lobby.New(c)
+		return lobby.NewLobby(c)
 	case "memory":
-		return memory.New(c)
+		return memory.NewMemory(c)
 	default:
 		log.Println("invalid scene name")
 		return nil

@@ -15,7 +15,7 @@ type Memory struct {
 	// Sprites []*Sprite
 }
 
-func New(c *ws.Connection) *Memory {
+func NewMemory(c *ws.Connection) *Memory {
 	log.Println("scene changed to Memory")
 	return &Memory{
 		Conn: c,
