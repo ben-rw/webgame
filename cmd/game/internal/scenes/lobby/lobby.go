@@ -2,7 +2,7 @@ package lobby
 
 import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
-	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenposition"
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenproperties"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -10,7 +10,6 @@ import (
 
 	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image"
-	"image/color"
 	"log"
 )
 
@@ -122,7 +121,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 }
 
 func (l *Lobby) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{120, 180, 255, 255})
+	screen.Fill(screenproperties.BackgroundColor)
 
 	opts := ebiten.DrawImageOptions{}
 	opts.GeoM.Translate(l.Player.X, l.Player.Y)
@@ -168,6 +167,6 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 			PrimaryAlign: 2,
 		},
 	}
-	textOpts.GeoM.Translate(screenposition.BottomRight())
+	textOpts.GeoM.Translate(screenproperties.BottomRight())
 	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 }

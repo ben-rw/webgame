@@ -1,4 +1,8 @@
-package screenposition
+package screenproperties
+
+import "image/color"
+
+var BackgroundColor = color.RGBA{0, 105, 150, 1}
 
 const (
 	ScreenWidth  float64 = 320

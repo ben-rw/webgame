@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/ben-rw/webgame/cmd/game/internal/scenes/lobby"
-	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenposition"
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenproperties"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -47,7 +47,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return int(screenposition.ScreenWidth), int(screenposition.ScreenHeight)
+	return int(screenproperties.ScreenWidth), int(screenproperties.ScreenHeight)
 }
 
 func main() {
