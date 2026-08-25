@@ -45,8 +45,8 @@ type PlayerUpdateData struct {
 type SceneType int
 
 const (
-	RandomScene SceneType = iota
-	LobbyScene
+	LobbyScene SceneType = iota
+	RandomScene
 	MemoryScene
 )
 

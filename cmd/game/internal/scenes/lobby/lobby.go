@@ -93,6 +93,13 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		}
 	}
 
+	if ebiten.IsKeyPressed(ebiten.KeyEnter) &&
+		l.Player.Data.Host == true {
+		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
+			SceneType: protocol.RandomScene,
+		})
+	}
+
 	// if ebiten.IsKeyPressed(ebiten.KeyRight) {
 	// 	l.Player.X += 2
 	// }
@@ -154,7 +161,7 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 
 	waitText := "Waiting for host..."
 	if l.Player.Data.Host == true {
-		waitText = "Press Start!"
+		waitText = "Press ENTER to start!"
 	}
 	textOpts := text.DrawOptions{
 		LayoutOptions: text.LayoutOptions{

@@ -1,4 +1,4 @@
-package minigames
+package lobby
 
 import (
 	// "errors"
@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol.Message, error) {
+func ValidateMsg(msg *protocol.Message) (*protocol.Message, error) {
 	var data any
 	if msg.Type == protocol.PlayerUpdate {
 		// playerUpdateData, err := msg.UnmarshalMessageData()
@@ -24,6 +24,6 @@ func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol
 		// }
 	}
 
-	log.Printf("couldn't validate msg data: %v, scene: %v", data, scene)
+	log.Printf("couldn't validate msg data: %v", data)
 	return &protocol.Message{Type: protocol.Unset}, nil
 }
