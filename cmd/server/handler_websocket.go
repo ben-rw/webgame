@@ -111,12 +111,12 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readLoop(currentRoom, &client)
+	readLoop(currentRoom, &client, playerData, playerDataList)
 	player.Client = nil
 }
 
 // read incoming messages, close dead connections, drop messages if buffer fills up
-func readLoop(r *room.Room, c *room.Client) {
+func readLoop(r *room.Room, c *room.Client, playerData *protocol.PlayerData, playerDataList []*protocol.PlayerData) {
 	defer c.Close(websocket.StatusInternalError, "connection closed unexpectedly")
 
 	msg := protocol.Message{}
@@ -147,6 +147,29 @@ func readLoop(r *room.Room, c *room.Client) {
 			continue
 		} else {
 			r.Broadcast(updateMsg)
+		}
+
+		if updateMsg.Type == protocol.SceneChange {
+			for _, player := range r.Players {
+				playerList, err := getPlayerDataList(r)
+				if err != nil {
+					log.Printf("couldn't get player data list: %v", err)
+					continue
+				}
+
+				scenePlayerData := &protocol.JoinResponseData{
+					PlayerData: playerToPlayerData(player),
+					PlayerList: playerList,
+				}
+
+				msg, err := protocol.MarshalToMessage(protocol.JoinResponse, scenePlayerData)
+				if err != nil {
+					log.Printf("couldn't marshal msg: %v", err)
+					continue
+				}
+
+				wsjson.Write(context.Background(), c.Conn, msg)
+			}
 		}
 	}
 }

@@ -24,7 +24,7 @@ func NewLobby(c *ws.Connection) *Lobby {
 	return &Lobby{
 		Conn:    c,
 		Players: map[string]*shared.Player{},
-		Player:  NewPlayer(&protocol.PlayerData{}, 0),
+		Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		Sprites: []*shared.Sprite{},
 	}
 }
@@ -50,7 +50,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 				if _, ok := l.Players[playerData.Name]; ok {
 					l.Players[playerData.Name].Data = playerData
 				} else {
-					player := NewPlayer(playerData, len(l.Players))
+					player := shared.NewPlayer(playerData, len(l.Players))
 					l.Players[playerData.Name] = player
 				}
 			}
@@ -81,7 +81,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 			if _, ok := l.Players[data.PlayerData.Name]; ok {
 				l.Players[data.PlayerData.Name].Data = data.PlayerData
 			} else {
-				player := NewPlayer(data.PlayerData, len(l.Players))
+				player := shared.NewPlayer(data.PlayerData, len(l.Players))
 				l.Players[data.PlayerData.Name] = player
 			}
 
@@ -97,24 +97,6 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 			SceneType: protocol.RandomScene,
 		})
 	}
-
-	// if ebiten.IsKeyPressed(ebiten.KeyRight) {
-	// 	l.Player.X += 2
-	// }
-	// if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-	// 	l.Player.X -= 2
-	// }
-	// if ebiten.IsKeyPressed(ebiten.KeyUp) {
-	// 	l.Player.Y -= 2
-	// }
-	// if ebiten.IsKeyPressed(ebiten.KeyDown) {
-	// 	l.Player.Y += 2
-	// }
-
-	// playerUpdate := &protocol.PlayerUpdateData{
-	// PlayerData: l.Player.Data,
-	// }
-	// l.Conn.WriteMsg(protocol.PlayerUpdate, playerUpdate)
 
 	return nil
 }

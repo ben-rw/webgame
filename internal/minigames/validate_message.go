@@ -64,13 +64,13 @@ func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol
 		case protocol.LobbyScene:
 			msg, err := lobby.ValidateMsg(msg)
 			if err != nil {
-				log.Printf("lobby couldn't validate msg: %v", err)
+				return &protocol.Message{Type: protocol.Unset}, err
 			}
 			return msg, nil
 		case protocol.MemoryScene:
 			msg, err := lobby.ValidateMsg(msg)
 			if err != nil {
-				log.Printf("lobby couldn't validate msg: %v", err)
+				return &protocol.Message{Type: protocol.Unset}, err
 			}
 			return msg, nil
 		}

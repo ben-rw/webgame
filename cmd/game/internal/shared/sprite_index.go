@@ -1,4 +1,4 @@
-package lobby
+package shared
 
 var imgRootPath string = "assets/images/ninja_adventure/Actor/Character/"
 var imgPathEnd string = "/SpriteSheet.png"
