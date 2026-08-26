@@ -15,17 +15,17 @@ import (
 
 type Lobby struct {
 	Conn    *ws.Connection
-	Players map[string]*Player
-	Player  *Player
-	Sprites []*Sprite
+	Players map[string]*shared.Player
+	Player  *shared.Player
+	Sprites []*shared.Sprite
 }
 
 func NewLobby(c *ws.Connection) *Lobby {
 	return &Lobby{
 		Conn:    c,
-		Players: map[string]*Player{},
+		Players: map[string]*shared.Player{},
 		Player:  NewPlayer(&protocol.PlayerData{}, 0),
-		Sprites: []*Sprite{},
+		Sprites: []*shared.Sprite{},
 	}
 }
 

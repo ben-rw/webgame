@@ -5,7 +5,6 @@ import (
 
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/ben-rw/webgame/internal/protocol"
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
@@ -14,24 +13,7 @@ const (
 	nameTagSize = 4
 )
 
-type Player struct {
-	*Sprite
-	Data    *protocol.PlayerData
-	NameTag *NameTag
-}
-
-type Sprite struct {
-	Img  *ebiten.Image
-	X, Y float64
-}
-
-type NameTag struct {
-	Face          *text.GoTextFace
-	X, Y          float64
-	LayoutOptions text.LayoutOptions
-}
-
-func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
+func NewPlayer(data *protocol.PlayerData, joinOrder int) *shared.Player {
 	log.Printf("playerdata sprite index: %v", data.SpriteIndex)
 	imgPath := PlayerSpriteIndex[data.SpriteIndex]
 	playerImg, _, err := ebitenutil.NewImageFromFileSystem(shared.AssetsFS, imgPath)
@@ -41,8 +23,8 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 
 	startPosition := StartingPositions[joinOrder]
 
-	return &Player{
-		Sprite: &Sprite{
+	return &shared.Player{
+		Sprite: &shared.Sprite{
 			Img: playerImg,
 			X:   startPosition.X,
 			Y:   startPosition.Y,
@@ -53,7 +35,7 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 			Host:        data.Host,
 			SpriteIndex: data.SpriteIndex,
 		},
-		NameTag: &NameTag{
+		NameTag: &shared.NameTag{
 			Face: &text.GoTextFace{
 				Source: shared.FontSrc,
 				Size:   nameTagSize,
