@@ -85,7 +85,6 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 				l.Players[data.PlayerData.Name] = player
 			}
 
-			l.Players[data.PlayerData.Name].Data = data.PlayerData
 			log.Printf("updated: %v", *l.Players[data.PlayerData.Name].Data)
 
 		default:

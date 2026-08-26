@@ -16,13 +16,13 @@ func NewPlayerSpriteIndex() *[]int {
 
 // returns sprite index, remove index from playerSpriteIndex to avoid duplicates
 func (r *Room) AssignPlayerSprite() int {
-	i := rand.Intn(len(*r.PlayerSpriteIndex))
-
 	r.Mu.Lock()
+	i := rand.Intn(len(*r.PlayerSpriteIndex))
 	s := *r.PlayerSpriteIndex
+	spriteIndex := s[i]
 	s[i] = s[len(s)-1]
 	*r.PlayerSpriteIndex = s[:len(s)-1]
 	r.Mu.Unlock()
 
-	return i
+	return spriteIndex
 }
