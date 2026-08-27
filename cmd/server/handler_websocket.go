@@ -111,12 +111,12 @@ func (cfg *config) handlerWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readLoop(currentRoom, &client, playerData, playerDataList)
+	readLoop(currentRoom, &client)
 	player.Client = nil
 }
 
 // read incoming messages, close dead connections, drop messages if buffer fills up
-func readLoop(r *room.Room, c *room.Client, playerData *protocol.PlayerData, playerDataList []*protocol.PlayerData) {
+func readLoop(r *room.Room, c *room.Client) {
 	defer c.Close(websocket.StatusInternalError, "connection closed unexpectedly")
 
 	msg := protocol.Message{}
