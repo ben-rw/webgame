@@ -1,22 +1,33 @@
 package shared
 
 import (
+	"log"
+
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/animations"
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/spritesheet"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"log"
 )
+
+const (
+	nameTagSize = 4
+)
+
+type Sprite struct {
+	Img          *ebiten.Image
+	X, Y, Dx, Dy float64
+}
 
 type Player struct {
 	*Sprite
-	Data    *protocol.PlayerData
-	NameTag *NameTag
-}
-
-type Sprite struct {
-	Img  *ebiten.Image
-	X, Y float64
+	Data            *protocol.PlayerData
+	NameTag         *NameTag
+	SpriteSheet     *spritesheet.SpriteSheet
+	Animations      map[PlayerState]*animations.Animation
+	ActiveAnimation *animations.Animation
+	JustJoined      bool
 }
 
 type NameTag struct {
@@ -25,9 +36,40 @@ type NameTag struct {
 	LayoutOptions text.LayoutOptions
 }
 
+type PlayerState int
+
 const (
-	nameTagSize = 4
+	Idle PlayerState = iota
+	Down
+	Up
+	Left
+	Right
+	Join
 )
+
+func (p *Player) GetActiveAnimation() *animations.Animation {
+	if p.JustJoined {
+		p.ActiveAnimation = p.Animations[Join]
+		if p.ActiveAnimation.Over == true {
+			p.JustJoined = false
+		} else {
+			return p.ActiveAnimation
+		}
+	}
+	if p.Dx > 0 {
+		return p.Animations[Right]
+	}
+	if p.Dx < 0 {
+		return p.Animations[Left]
+	}
+	if p.Dy > 0 {
+		return p.Animations[Down]
+	}
+	if p.Dx < 0 {
+		return p.Animations[Up]
+	}
+	return p.Animations[Idle]
+}
 
 func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 	log.Printf("playerdata sprite index: %v", data.SpriteIndex)
@@ -44,6 +86,8 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 			Img: playerImg,
 			X:   startPosition.X,
 			Y:   startPosition.Y,
+			Dx:  0,
+			Dy:  0,
 		},
 		Data: &protocol.PlayerData{
 			Name:        data.Name,
@@ -62,5 +106,15 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 				PrimaryAlign: 1,
 			},
 		},
+		SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize),
+		Animations: map[PlayerState]*animations.Animation{
+			Up:    animations.NewAnimation(5, 13, 4, 20.0),
+			Down:  animations.NewAnimation(4, 12, 4, 20.0),
+			Left:  animations.NewAnimation(6, 14, 4, 20.0),
+			Right: animations.NewAnimation(7, 15, 4, 20.0),
+			Idle:  animations.NewAnimation(0, 16, 16, 20.0),
+			Join:  animations.NewAnimation(25, 27, 1, 40.0),
+		},
+		JustJoined: true,
 	}
 }

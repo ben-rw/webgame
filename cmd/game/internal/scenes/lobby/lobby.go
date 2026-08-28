@@ -9,7 +9,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"image"
 	"log"
 )
 
@@ -98,6 +97,9 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		})
 	}
 
+	l.Player.ActiveAnimation = l.Player.GetActiveAnimation()
+	l.Player.ActiveAnimation.Update()
+
 	return nil
 }
 
@@ -109,19 +111,20 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(
 		l.Player.Img.SubImage(
-			image.Rect(0, 0, 16, 16),
+			l.Player.SpriteSheet.Rect(l.Player.ActiveAnimation.Frame()),
 		).(*ebiten.Image),
 		&opts,
 	)
 
 	opts.GeoM.Reset()
 
-	for _, sprite := range l.Players {
-		opts.GeoM.Translate(sprite.X, sprite.Y)
+	for _, player := range l.Players {
+		opts.GeoM.Translate(player.X, player.Y)
 
+		player.ActiveAnimation = player.GetActiveAnimation()
 		screen.DrawImage(
-			sprite.Img.SubImage(
-				image.Rect(0, 0, 16, 16),
+			player.Img.SubImage(
+				player.SpriteSheet.Rect(player.ActiveAnimation.Frame()),
 			).(*ebiten.Image),
 			&opts,
 		)
