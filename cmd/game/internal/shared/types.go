@@ -113,7 +113,7 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 			Left:  animations.NewAnimation(6, 14, 4, 20.0),
 			Right: animations.NewAnimation(7, 15, 4, 20.0),
 			Idle:  animations.NewAnimation(0, 16, 16, 20.0),
-			Join:  animations.NewAnimation(25, 27, 1, 40.0),
+			Join:  animations.NewAnimation(26, 27, 1, 60.0),
 		},
 		JustJoined: true,
 	}

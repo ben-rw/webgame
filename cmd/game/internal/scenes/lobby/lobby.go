@@ -97,8 +97,10 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		})
 	}
 
-	l.Player.ActiveAnimation = l.Player.GetActiveAnimation()
-	l.Player.ActiveAnimation.Update()
+	for _, player := range l.Players {
+		player.ActiveAnimation = player.GetActiveAnimation()
+		player.ActiveAnimation.Update()
+	}
 
 	return nil
 }
@@ -107,16 +109,16 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 	screen.Fill(screenproperties.BackgroundColor)
 
 	opts := ebiten.DrawImageOptions{}
-	opts.GeoM.Translate(l.Player.X, l.Player.Y)
+	// opts.GeoM.Translate(l.Player.X, l.Player.Y)
 
-	screen.DrawImage(
-		l.Player.Img.SubImage(
-			l.Player.SpriteSheet.Rect(l.Player.ActiveAnimation.Frame()),
-		).(*ebiten.Image),
-		&opts,
-	)
-
-	opts.GeoM.Reset()
+	// screen.DrawImage(
+	// 	l.Player.Img.SubImage(
+	// 		l.Player.SpriteSheet.Rect(l.Player.ActiveAnimation.Frame()),
+	// 	).(*ebiten.Image),
+	// 	&opts,
+	// )
+	//
+	// opts.GeoM.Reset()
 
 	for _, player := range l.Players {
 		opts.GeoM.Translate(player.X, player.Y)
