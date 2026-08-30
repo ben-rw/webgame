@@ -14,7 +14,7 @@ var PlayerSpriteIndex map[int]string = map[int]string{
 	7: imgRootPath + "Noble" + imgPathEnd,
 }
 
-var StartingPositions map[int]struct{ X, Y float64 } = map[int]struct{ X, Y float64 }{
+var StartingPositions = map[int]struct{ X, Y float64 }{
 	0: {X: 20, Y: 20},
 	1: {X: 20, Y: 60},
 	2: {X: 20, Y: 100},

@@ -47,6 +47,16 @@ const (
 	Join
 )
 
+// walks player from one place to another at speed proportionate
+// to the initial distance between the player's location and the
+// destination with no input from the player
+func (p *Player) ScriptedWalk(destX, destY float64) {
+	for destX != p.X && destY != p.Y {
+		p.Dx = (destX - p.X) / 50
+		p.Dy = (destY - p.Y) / 50
+	}
+}
+
 func (p *Player) GetActiveAnimation() *animations.Animation {
 	if p.JustJoined {
 		p.ActiveAnimation = p.Animations[Join]

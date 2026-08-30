@@ -6,9 +6,9 @@ import (
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 
-	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"log"
 )
 
@@ -90,7 +90,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		}
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyEnter) &&
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) &&
 		l.Player.Data.Host == true {
 		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
 			SceneType: protocol.RandomScene,
