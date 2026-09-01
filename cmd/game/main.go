@@ -27,7 +27,7 @@ func (g *Game) Update() error {
 		if msg.Type == protocol.SceneChange {
 			sceneChangeData, err := msg.UnmarshalMessageData()
 			if err != nil {
-				log.Println(err)
+				log.Printf("couldn't start new scene: %v", err)
 				continue
 			}
 			data, ok := sceneChangeData.(*protocol.SceneChangeData)

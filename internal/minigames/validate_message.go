@@ -8,18 +8,14 @@ import (
 	"math/rand"
 )
 
-var numberOfMinigames = 2
-
 // lobby, random omitted as they are not games
 var minigameMap = map[int]protocol.SceneType{
-	2: protocol.MemoryScene,
-	//placeholder
-	3: protocol.LobbyScene,
+	0: protocol.MemoryScene,
 }
 
-func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol.Message, error) {
-	if msg.Type == protocol.SceneChange {
-		sceneChangeData, err := msg.UnmarshalMessageData()
+func ValidateMessage(message *protocol.Message, scene protocol.SceneType) (*protocol.Message, error) {
+	if message.Type == protocol.SceneChange {
+		sceneChangeData, err := message.UnmarshalMessageData()
 		if err != nil {
 			return &protocol.Message{Type: protocol.Unset}, err
 		}
@@ -32,13 +28,14 @@ func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol
 		switch scdata.SceneType {
 		case protocol.RandomScene:
 			data := protocol.SceneChangeData{
-				SceneType: minigameMap[rand.Intn(numberOfMinigames)+numberOfMinigames],
+				SceneType: minigameMap[rand.Intn(len(minigameMap))],
 			}
 			log.Printf("randomly selected scene: %v\n", data.SceneType)
 			msg, err := protocol.MarshalToMessage(protocol.SceneChange, data)
 			if err != nil {
 				return &protocol.Message{Type: protocol.Unset}, err
 			}
+			log.Printf("st: %v, data: %v, md: %s", scdata.SceneType, data, msg.Data)
 			return msg, nil
 		case protocol.LobbyScene:
 			data := protocol.SceneChangeData{
@@ -62,13 +59,13 @@ func ValidateMessage(msg *protocol.Message, scene protocol.SceneType) (*protocol
 	} else {
 		switch scene {
 		case protocol.LobbyScene:
-			msg, err := lobby.ValidateMsg(msg)
+			msg, err := lobby.ValidateMsg(message)
 			if err != nil {
 				return &protocol.Message{Type: protocol.Unset}, err
 			}
 			return msg, nil
 		case protocol.MemoryScene:
-			msg, err := lobby.ValidateMsg(msg)
+			msg, err := lobby.ValidateMsg(message)
 			if err != nil {
 				return &protocol.Message{Type: protocol.Unset}, err
 			}

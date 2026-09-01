@@ -3,6 +3,8 @@ package protocol
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 )
 
 type MessageType string
@@ -34,8 +36,8 @@ type PlayerData struct {
 }
 
 type JoinResponseData struct {
-	PlayerData *PlayerData `json:"player_data"`
-	PlayerList []*PlayerData
+	PlayerData *PlayerData   `json:"player_data"`
+	PlayerList []*PlayerData `json:"player_list"`
 }
 
 type PlayerUpdateData struct {
@@ -51,7 +53,7 @@ const (
 )
 
 type SceneChangeData struct {
-	SceneType SceneType
+	SceneType SceneType `json:"scene_type"`
 }
 
 func (m *Message) UnmarshalMessageData() (any, error) {
@@ -70,9 +72,11 @@ func (m *Message) UnmarshalMessageData() (any, error) {
 		return nil, errors.New("unrecognized message format")
 	}
 
+	log.Printf("json: %s type: %v\n", m.Data, m.Type)
+
 	err := json.Unmarshal(m.Data, v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal error: %v", err)
 	}
 
 	return v, nil

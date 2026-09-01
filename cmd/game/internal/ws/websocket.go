@@ -67,9 +67,8 @@ func (c *Connection) Check() []protocol.Message {
 func (c *Connection) readLoop() {
 	defer c.Close(websocket.StatusInternalError, "connection closed unexpectedly")
 
-	msg := protocol.Message{}
-
 	for {
+		msg := protocol.Message{}
 		err := wsjson.Read(context.Background(), c.Conn, &msg)
 		if err != nil {
 			if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||

@@ -137,10 +137,10 @@ func readLoop(r *room.Room, c *room.Client) {
 
 		updateMsg, err := minigames.ValidateMessage(&msg, c.Player.Room.Scene)
 		if updateMsg.Type != protocol.Unset {
-			log.Printf("msg: %v, updateMsg: %v", string(msg.Data), string(updateMsg.Data))
+			log.Printf("msg: %v, updateMsg: %v\n", string(msg.Data), string(updateMsg.Data))
 		}
 		if err != nil {
-			log.Printf("updateMsg err: %v", err)
+			log.Printf("updateMsg err: %v\n", err)
 			continue
 		} else if updateMsg.Type == protocol.Unset {
 			log.Println("message not broadcasted: empty message")
@@ -150,25 +150,39 @@ func readLoop(r *room.Room, c *room.Client) {
 		}
 
 		if updateMsg.Type == protocol.SceneChange {
-			for _, player := range r.Players {
-				playerList, err := getPlayerDataList(r)
-				if err != nil {
-					log.Printf("couldn't get player data list: %v", err)
-					continue
-				}
+			playerList, err := r.GetPlayerList()
+			if err != nil {
+				log.Printf("couldn't get player list: %v\n", err)
+				continue
+			}
+
+			playerDataList, err := getPlayerDataList(r)
+			if err != nil {
+				log.Printf("couldn't get player data list: %v\n", err)
+				continue
+			}
+
+			for _, player := range playerList {
 
 				scenePlayerData := &protocol.JoinResponseData{
 					PlayerData: playerToPlayerData(player),
-					PlayerList: playerList,
+					PlayerList: playerDataList,
 				}
 
 				msg, err := protocol.MarshalToMessage(protocol.JoinResponse, scenePlayerData)
 				if err != nil {
-					log.Printf("couldn't marshal msg: %v", err)
+					log.Printf("couldn't marshal msg: %v\n", err)
 					continue
 				}
 
-				wsjson.Write(context.Background(), c.Conn, msg)
+				log.Printf("updateMsgData: %s, jrmsg: %s\n", updateMsg.Data, msg.Data)
+
+				if player.Client != nil {
+					err := wsjson.Write(context.Background(), player.Client.Conn, msg)
+					if err != nil {
+						log.Println(err)
+					}
+				}
 			}
 		}
 	}
