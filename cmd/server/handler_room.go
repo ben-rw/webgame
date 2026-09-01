@@ -138,7 +138,6 @@ func (cfg *config) handlerJoinRoom(w http.ResponseWriter, r *http.Request) {
 // parses url for roomID, serves room page html at /room/{roomID}
 func (cfg *config) handlerServeRoomPage(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
-	fmt.Printf("roomID: %v\n", roomID)
 
 	roomID = strings.ToUpper(roomID)
 	_, ok := cfg.RoomReg.Get(roomID)

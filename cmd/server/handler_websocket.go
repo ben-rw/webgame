@@ -140,7 +140,7 @@ func readLoop(r *room.Room, c *room.Client) {
 			log.Printf("msg: %v, updateMsg: %v\n", string(msg.Data), string(updateMsg.Data))
 		}
 		if err != nil {
-			log.Printf("updateMsg err: %v\n", err)
+			log.Printf("couldn't validate message: %v\n", err)
 			continue
 		} else if updateMsg.Type == protocol.Unset {
 			log.Println("message not broadcasted: empty message")
@@ -174,8 +174,6 @@ func readLoop(r *room.Room, c *room.Client) {
 					log.Printf("couldn't marshal msg: %v\n", err)
 					continue
 				}
-
-				log.Printf("updateMsgData: %s, jrmsg: %s\n", updateMsg.Data, msg.Data)
 
 				if player.Client != nil {
 					err := wsjson.Write(context.Background(), player.Client.Conn, msg)

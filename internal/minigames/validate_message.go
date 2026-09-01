@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/ben-rw/webgame/internal/minigames/lobby"
 	"github.com/ben-rw/webgame/internal/protocol"
-	"log"
 	"math/rand"
 )
 
@@ -30,12 +29,10 @@ func ValidateMessage(message *protocol.Message, scene protocol.SceneType) (*prot
 			data := protocol.SceneChangeData{
 				SceneType: minigameMap[rand.Intn(len(minigameMap))],
 			}
-			log.Printf("randomly selected scene: %v\n", data.SceneType)
 			msg, err := protocol.MarshalToMessage(protocol.SceneChange, data)
 			if err != nil {
 				return &protocol.Message{Type: protocol.Unset}, err
 			}
-			log.Printf("st: %v, data: %v, md: %s", scdata.SceneType, data, msg.Data)
 			return msg, nil
 		case protocol.LobbyScene:
 			data := protocol.SceneChangeData{
