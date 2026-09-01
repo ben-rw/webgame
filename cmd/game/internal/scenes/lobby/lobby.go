@@ -13,17 +13,18 @@ import (
 )
 
 type Lobby struct {
+	shared.Roster
 	Conn    *ws.Connection
-	Players map[string]*shared.Player
-	Player  *shared.Player
 	Sprites []*shared.Sprite
 }
 
 func NewLobby(c *ws.Connection) *Lobby {
 	return &Lobby{
+		Roster: shared.Roster{
+			Players: map[string]*shared.Player{},
+			Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
+		},
 		Conn:    c,
-		Players: map[string]*shared.Player{},
-		Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		Sprites: []*shared.Sprite{},
 	}
 }
@@ -33,28 +34,11 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		log.Printf("msg type: %v", string(message.Type))
 		switch message.Type {
 		case protocol.JoinResponse:
-			joinResponseData, err := message.UnmarshalMessageData()
+			err := l.HandleJoinResponse(message)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-
-			data, ok := joinResponseData.(*protocol.JoinResponseData)
-			if !ok {
-				log.Println("failed type assertion")
-				continue
-			}
-
-			for _, playerData := range data.PlayerList {
-				if _, ok := l.Players[playerData.Name]; ok {
-					l.Players[playerData.Name].Data = playerData
-				} else {
-					player := shared.NewPlayer(playerData, len(l.Players))
-					l.Players[playerData.Name] = player
-				}
-			}
-
-			l.Player = l.Players[data.PlayerData.Name]
 
 			log.Printf("player: %v", *l.Player.Data)
 
@@ -65,26 +49,11 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 			l.Conn.WriteMsg(protocol.PlayerUpdate, playerUpdateData)
 
 		case protocol.PlayerUpdate:
-			playerUpdateData, err := message.UnmarshalMessageData()
+			err := l.HandlePlayerUpdate(message)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			data, ok := playerUpdateData.(*protocol.PlayerUpdateData)
-			if !ok {
-				log.Println("failed type assertion")
-				continue
-			}
-			log.Printf("playerlist: %v", l.Players)
-
-			if _, ok := l.Players[data.PlayerData.Name]; ok {
-				l.Players[data.PlayerData.Name].Data = data.PlayerData
-			} else {
-				player := shared.NewPlayer(data.PlayerData, len(l.Players))
-				l.Players[data.PlayerData.Name] = player
-			}
-
-			log.Printf("updated: %v", *l.Players[data.PlayerData.Name].Data)
 
 		default:
 		}
