@@ -51,9 +51,22 @@ const (
 // to the initial distance between the player's location and the
 // destination with no input from the player
 func (p *Player) ScriptedWalk(destX, destY float64) {
-	for destX != p.X && destY != p.Y {
-		p.Dx = (destX - p.X) / 50
-		p.Dy = (destY - p.Y) / 50
+	distX := destX - p.X
+	stepX := distX / 100000
+	distY := destY - p.Y
+	stepY := distY / 100000
+	for destX != p.X || destY != p.Y {
+		if destX-p.X > stepX {
+			p.X = destX
+		} else {
+			p.X += stepX
+		}
+		if destY-p.Y > stepY {
+			p.Y = destY
+		} else {
+			p.Y += stepY
+		}
+		log.Println(p.X, p.Y)
 	}
 }
 
