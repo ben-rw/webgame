@@ -9,7 +9,7 @@ import (
 
 // lobby, random omitted as they are not games
 var minigameMap = map[int]protocol.SceneType{
-	0: protocol.MemoryScene,
+	0: protocol.WizardsScene,
 }
 
 func ValidateMessage(message *protocol.Message, scene protocol.SceneType) (*protocol.Message, error) {
@@ -52,6 +52,15 @@ func ValidateMessage(message *protocol.Message, scene protocol.SceneType) (*prot
 				return &protocol.Message{Type: protocol.Unset}, err
 			}
 			return msg, nil
+		case protocol.WizardsScene:
+			data := protocol.SceneChangeData{
+				SceneType: protocol.WizardsScene,
+			}
+			msg, err := protocol.MarshalToMessage(protocol.SceneChange, data)
+			if err != nil {
+				return &protocol.Message{Type: protocol.Unset}, err
+			}
+			return msg, nil
 		}
 	} else {
 		switch scene {
@@ -62,6 +71,12 @@ func ValidateMessage(message *protocol.Message, scene protocol.SceneType) (*prot
 			}
 			return msg, nil
 		case protocol.MemoryScene:
+			msg, err := lobby.ValidateMsg(message)
+			if err != nil {
+				return &protocol.Message{Type: protocol.Unset}, err
+			}
+			return msg, nil
+		case protocol.WizardsScene:
 			msg, err := lobby.ValidateMsg(message)
 			if err != nil {
 				return &protocol.Message{Type: protocol.Unset}, err

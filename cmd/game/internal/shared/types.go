@@ -45,6 +45,7 @@ const (
 	Left
 	Right
 	Join
+	Attack
 )
 
 // walks player from one place to another at speed proportionate
@@ -78,6 +79,15 @@ func (p *Player) GetActiveAnimation() *animations.Animation {
 		} else {
 			return p.ActiveAnimation
 		}
+	}
+	if ebiten.IsKeyPressed(ebiten.Key(ebiten.MouseButtonLeft)) {
+		return p.Animations[Attack]
+	}
+	if ebiten.IsKeyPressed(ebiten.Key(ebiten.MouseButtonRight)) {
+		return p.Animations[Attack]
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyR) {
+		return p.Animations[Attack]
 	}
 	if p.Dx > 0 {
 		return p.Animations[Right]
@@ -131,12 +141,13 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 		},
 		SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize),
 		Animations: map[PlayerState]*animations.Animation{
-			Up:    animations.NewAnimation(5, 13, 4, 20.0),
-			Down:  animations.NewAnimation(4, 12, 4, 20.0),
-			Left:  animations.NewAnimation(6, 14, 4, 20.0),
-			Right: animations.NewAnimation(7, 15, 4, 20.0),
-			Idle:  animations.NewAnimation(0, 16, 16, 20.0),
-			Join:  animations.NewAnimation(26, 27, 1, 60.0),
+			Up:     animations.NewAnimation(5, 13, 4, 20.0),
+			Down:   animations.NewAnimation(4, 12, 4, 20.0),
+			Left:   animations.NewAnimation(6, 14, 4, 20.0),
+			Right:  animations.NewAnimation(7, 15, 4, 20.0),
+			Idle:   animations.NewAnimation(0, 16, 16, 20.0),
+			Join:   animations.NewAnimation(26, 27, 1, 60.0),
+			Attack: animations.NewAnimation(16, 16, 0, 20),
 		},
 		JustJoined: true,
 	}

@@ -50,6 +50,7 @@ const (
 	LobbyScene SceneType = iota
 	RandomScene
 	MemoryScene
+	WizardsScene
 )
 
 type SceneChangeData struct {

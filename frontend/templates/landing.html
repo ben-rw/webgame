@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="/static/css/landing.css">
   </head>
   <body>
-    <h1>Webgame!</h1>
+    <h1>Wicked Wizards!</h1>
     <form action="/room/join" method="post" id="joinForm">
             <label for="name"><span>Name</span></label>
             <input type="text" id="name" name="username" autocomplete="off" {{if .JoinUsernameError}}aria-invalid="true"{{end}}>
@@ -26,5 +26,7 @@
             {{if .CreateUsernameError}}<small><span>{{.CreateUsernameError}}</span></small>{{end}}
             <button type="submit"><span>Create Room</span></button>
     </form>
+    <br>
+    <h2>Gather Power! Blast your friends!</h2>
   </body>
 </html>

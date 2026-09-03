@@ -12,6 +12,7 @@ type Player struct {
 	SpriteIndex int
 	Room        *Room
 	Client      *Client
+	X, Y        float64
 }
 
 type Client struct {

@@ -4,7 +4,7 @@ import "image/color"
 
 var BackgroundColor = color.RGBA{0, 105, 150, 1}
 
-const (
+var (
 	ScreenWidth  float64 = 320
 	ScreenHeight float64 = 180
 )
