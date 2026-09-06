@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
-	"log"
 	"path"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -51,7 +50,6 @@ func NewTilemapJSON(filepath string) (*TilemapJSON, error) {
 			return nil, err
 		}
 		tileset.Data = tilesetData.Data
-		fmt.Printf("%+v\n", tileset)
 	}
 
 	return &tilemapJSON, nil
@@ -70,7 +68,6 @@ func getTileImgIndex(id int, tilemapJSON *TilemapJSON) int {
 func newTileImgList(tilemapJSON *TilemapJSON) ([]*ebiten.Image, error) {
 	imgList := make([]*ebiten.Image, len(tilemapJSON.Tilesets))
 	for i := range tilemapJSON.Tilesets {
-		fmt.Printf("image path: %v,\n columns: %v\n", path.Clean("/"+tilemapJSON.Tilesets[i].Data.ImagePath), tilemapJSON.Tilesets[i].Data.Columns)
 		img, _, err := ebitenutil.NewImageFromFileSystem(AssetsFS, (fmt.Sprintf("assets%v", path.Clean("/"+tilemapJSON.Tilesets[i].Data.ImagePath))))
 		if err != nil {
 			return nil, err
@@ -83,6 +80,7 @@ func newTileImgList(tilemapJSON *TilemapJSON) ([]*ebiten.Image, error) {
 
 func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*ebiten.Image, error) {
 	imgMap := make(map[int]*ebiten.Image)
+	tileImgList, err := newTileImgList(tilemapJSON)
 	for _, layer := range tilemapJSON.Layers {
 		for _, id := range layer.Data {
 			if id == 0 {
@@ -90,10 +88,10 @@ func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*ebiten.Image, error) {
 			}
 			if _, ok := imgMap[id]; !ok {
 				tileImgIndex := getTileImgIndex(id, tilemapJSON)
-				tileImgList, err := newTileImgList(tilemapJSON)
 				if err != nil {
 					return nil, err
 				}
+
 				tileImg := tileImgList[tileImgIndex]
 
 				srcX := (id - tilemapJSON.Tilesets[tileImgIndex].Firstgid) % tilemapJSON.Tilesets[tileImgIndex].Data.Columns
@@ -106,6 +104,5 @@ func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*ebiten.Image, error) {
 			}
 		}
 	}
-	log.Println(imgMap)
 	return imgMap, nil
 }
