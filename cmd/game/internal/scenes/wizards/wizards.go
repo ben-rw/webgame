@@ -7,7 +7,6 @@ import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"image"
 
 	"log"
 )
@@ -16,6 +15,7 @@ const (
 	defaultMoveSpeed       = 2
 	defaultProjectileSpeed = 5
 	defaultProjectileSize  = 1
+	tilemapPath            = "assets/maps/ninja_dungeon.json"
 )
 
 type Stats struct {
@@ -37,7 +37,7 @@ type Wizards struct {
 	PlayerStats map[*shared.Player]Stats
 	Projectiles []*Projectile
 	tilemapJSON *shared.TilemapJSON
-	tileImgList []*ebiten.Image
+	tileCache   map[int]*ebiten.Image
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
@@ -45,13 +45,13 @@ func NewWizards(c *ws.Connection) *Wizards {
 	screenproperties.ScreenHeight = screenproperties.ScreenHeight * 2
 	screenproperties.ScreenWidth = screenproperties.ScreenWidth * 2
 
-	tilemap, err := shared.NewTilemapJSON("assets/maps/ninja_dungeon.json")
+	tilemap, err := shared.NewTilemapJSON(tilemapPath)
 	if err != nil {
 		log.Printf("couldn't load tilemap: %v", err)
 	}
-	tileImgList, err := shared.NewTileImgList(tilemap)
+	tileCache, err := shared.NewTileCache(tilemap)
 	if err != nil {
-		log.Printf("couldn't build tile image list: %v", err)
+		log.Printf("couldn't build tile cache: %v", err)
 	}
 
 	return &Wizards{
@@ -64,7 +64,7 @@ func NewWizards(c *ws.Connection) *Wizards {
 		PlayerStats: make(map[*shared.Player]Stats, 8),
 		Projectiles: make([]*Projectile, 0),
 		tilemapJSON: tilemap,
-		tileImgList: tileImgList,
+		tileCache:   tileCache,
 	}
 }
 
@@ -140,19 +140,10 @@ func (w Wizards) Draw(screen *ebiten.Image) {
 			x *= shared.TileSize
 			y *= shared.TileSize
 
-			tileImgIndex := shared.GetTileImgIndex(id, w.tilemapJSON)
-			tileImg := w.tileImgList[tileImgIndex]
-
-			srcX := (id - w.tilemapJSON.Tilesets[tileImgIndex].Firstgid) % w.tilemapJSON.Tilesets[tileImgIndex].Data.Columns
-			srcY := (id - w.tilemapJSON.Tilesets[tileImgIndex].Firstgid) / w.tilemapJSON.Tilesets[tileImgIndex].Data.Columns
-
-			srcX *= shared.TileSize
-			srcY *= shared.TileSize
-
 			opts.GeoM.Translate(float64(x), float64(y))
 
 			screen.DrawImage(
-				tileImg.SubImage(image.Rect(srcX, srcY, srcX+shared.TileSize, srcY+shared.TileSize)).(*ebiten.Image),
+				w.tileCache[id],
 				&opts,
 			)
 
