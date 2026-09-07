@@ -7,8 +7,8 @@ import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"math"
 
-	//	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"log"
 )
 
@@ -16,6 +16,7 @@ const (
 	defaultMoveSpeed       = 2
 	defaultProjectileSpeed = 5
 	defaultProjectileSize  = 1
+	tilemapPath            = "assets/maps/ninja_dungeon.json"
 )
 
 type Stats struct {
@@ -34,14 +35,26 @@ type Wizards struct {
 	shared.Roster
 	Conn        *ws.Connection
 	Sprites     []*shared.Sprite
-	PlayerStats map[*shared.Player]Stats
+	PlayerStats map[string]*Stats
 	Projectiles []*Projectile
+	tilemapJSON *shared.TilemapJSON
+	tileCache   map[int]*shared.Tile
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
 	log.Println("scene changed to Wizards")
 	screenproperties.ScreenHeight = screenproperties.ScreenHeight * 2
 	screenproperties.ScreenWidth = screenproperties.ScreenWidth * 2
+
+	tilemap, err := shared.NewTilemapJSON(tilemapPath)
+	if err != nil {
+		log.Printf("couldn't load tilemap: %v", err)
+	}
+	tileCache, err := shared.NewTileCache(tilemap)
+	if err != nil {
+		log.Printf("couldn't build tile cache: %v", err)
+	}
+
 	return &Wizards{
 		Roster: shared.Roster{
 			Players: make(map[string]*shared.Player, 8),
@@ -49,34 +62,43 @@ func NewWizards(c *ws.Connection) *Wizards {
 		},
 		Conn:        c,
 		Sprites:     []*shared.Sprite{},
-		PlayerStats: make(map[*shared.Player]Stats, 8),
+		PlayerStats: make(map[string]*Stats, 8),
+		Projectiles: make([]*Projectile, 0),
+		tilemapJSON: tilemap,
+		tileCache:   tileCache,
 	}
 }
 
-func (m *Wizards) Update(messages []protocol.Message) error {
+func (w Wizards) Update(messages []protocol.Message) error {
 	for _, message := range messages {
 		switch message.Type {
 		case protocol.JoinResponse:
-			err := m.HandleJoinResponse(message)
+			err := w.HandleJoinResponse(message)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 
-			m.PlayerStats[m.Player] = Stats{
-				MoveSpeed:       defaultMoveSpeed,
-				ProjectileSpeed: defaultProjectileSpeed,
-				ProjectileSize:  defaultProjectileSize,
+			for _, player := range w.Players {
+				if _, ok := w.PlayerStats[player.Data.Name]; !ok {
+					w.PlayerStats[player.Data.Name] = &Stats{
+						MoveSpeed:       defaultMoveSpeed,
+						ProjectileSpeed: defaultProjectileSpeed,
+						ProjectileSize:  defaultProjectileSize,
+					}
+				}
 			}
+
+			log.Printf("initial player stats: %+v", w.PlayerStats[w.Player.Data.Name])
 
 			playerUpdateData := protocol.PlayerUpdateData{
-				PlayerData: m.Player.Data,
+				PlayerData: w.Player.Data,
 			}
 
-			m.Conn.WriteMsg(protocol.PlayerUpdate, playerUpdateData)
+			w.Conn.WriteMsg(protocol.PlayerUpdate, playerUpdateData)
 
 		case protocol.PlayerUpdate:
-			err := m.HandlePlayerUpdate(message)
+			err := w.HandlePlayerUpdate(message)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -86,24 +108,27 @@ func (m *Wizards) Update(messages []protocol.Message) error {
 		}
 	}
 
+	log.Printf("player stats: %+v", w.PlayerStats[w.Player.Data.Name])
+	log.Printf("playerdata: %+v", w.Player.Data)
+
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		m.Player.X += m.PlayerStats[m.Player].MoveSpeed
-		m.Player.NameTag.X += m.PlayerStats[m.Player].MoveSpeed
+		w.Player.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		m.Player.X -= m.PlayerStats[m.Player].MoveSpeed
-		m.Player.NameTag.X -= m.PlayerStats[m.Player].MoveSpeed
+		w.Player.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		m.Player.Y -= m.PlayerStats[m.Player].MoveSpeed
-		m.Player.NameTag.Y -= m.PlayerStats[m.Player].MoveSpeed
+		w.Player.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		m.Player.Y += m.PlayerStats[m.Player].MoveSpeed
-		m.Player.NameTag.Y += m.PlayerStats[m.Player].MoveSpeed
+		w.Player.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 
-	for _, player := range m.Players {
+	for _, player := range w.Players {
 		player.ActiveAnimation = player.GetActiveAnimation()
 		player.ActiveAnimation.Update()
 	}
@@ -111,12 +136,63 @@ func (m *Wizards) Update(messages []protocol.Message) error {
 	return nil
 }
 
-func (m *Wizards) Draw(screen *ebiten.Image) {
-	screen.Fill(screenproperties.BackgroundColor)
-
+func (w Wizards) Draw(screen *ebiten.Image) {
 	opts := ebiten.DrawImageOptions{}
 
-	for _, player := range m.Players {
+	for _, layer := range w.tilemapJSON.Layers {
+		for i, id := range layer.Data {
+			if id == 0 {
+				continue
+			}
+			x := i % layer.Width
+			y := i / layer.Width
+
+			x *= shared.TileSize
+			y *= shared.TileSize
+
+			tile := shared.Tile{}
+
+			if id&int(shared.FlagFlippedHorizontally) != 0 {
+				tile.Rotations.HorizontalRotation = true
+			}
+			if id&int(shared.FlagFlippedVertically) != 0 {
+				tile.Rotations.VerticalRotation = true
+			}
+			if id&int(shared.FlagFlippedDiagonally) != 0 {
+				tile.Rotations.DiagonalRotation = true
+			}
+
+			id &= ^(int(shared.FlagFlippedHorizontally) |
+				int(shared.FlagFlippedVertically) |
+				int(shared.FlagFlippedDiagonally) |
+				int(shared.FlagRotatedHexagonal120))
+
+			if tile.Rotations.DiagonalRotation && tile.Rotations.HorizontalRotation {
+				opts.GeoM.Translate(-shared.TileSize/2, -shared.TileSize/2)
+				opts.GeoM.Rotate(math.Pi)
+				opts.GeoM.Translate(shared.TileSize/2, shared.TileSize/2)
+			}
+			if tile.Rotations.HorizontalRotation {
+				opts.GeoM.Scale(-1, 1)
+				x += 16
+			}
+			if tile.Rotations.VerticalRotation {
+				opts.GeoM.Scale(1, -1)
+				y += 16
+			}
+
+			opts.GeoM.Translate(float64(x), float64(y))
+
+			screen.DrawImage(
+				w.tileCache[id].Img,
+				&opts,
+			)
+
+			opts.GeoM.Reset()
+		}
+	}
+
+	for _, player := range w.Players {
 		opts.GeoM.Translate(player.X, player.Y)
 
 		player.ActiveAnimation = player.GetActiveAnimation()
@@ -129,7 +205,7 @@ func (m *Wizards) Draw(screen *ebiten.Image) {
 
 		opts.GeoM.Reset()
 	}
-	for _, player := range m.Players {
+	for _, player := range w.Players {
 		textOpts := text.DrawOptions{
 			LayoutOptions: player.NameTag.LayoutOptions,
 		}

@@ -24,3 +24,7 @@ func BottomCenter() (float64, float64) {
 func BottomRight() (float64, float64) {
 	return ScreenWidth * 0.99, ScreenHeight * 0.9
 }
+
+func TopRight() (float64, float64) {
+	return ScreenWidth * 0.99, ScreenHeight * 0.1
+}

@@ -1,0 +1,14 @@
+{ "columns":11,
+ "image":"..\/images\/ninja_adventure\/Backgrounds\/Tilesets\/TilesetHole.png",
+ "imageheight":80,
+ "imagewidth":176,
+ "margin":0,
+ "name":"TilesetHole",
+ "spacing":0,
+ "tilecount":55,
+ "tiledversion":"1.12.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset",
+ "version":"1.10"
+}

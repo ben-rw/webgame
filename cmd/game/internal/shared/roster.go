@@ -47,8 +47,6 @@ func (r *Roster) HandlePlayerUpdate(message protocol.Message) error {
 		return err
 	}
 
-	log.Print("player list: %v", r.Players)
-
 	if _, ok := r.Players[data.PlayerData.Name]; ok {
 		r.Players[data.PlayerData.Name].Data = data.PlayerData
 	} else {
