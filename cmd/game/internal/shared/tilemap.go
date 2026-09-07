@@ -13,11 +13,11 @@ import (
 const TileSize = 16
 
 type Tile struct {
-	Img       *ebiten.Image
-	Rotations struct {
-		HorizontalRotation bool
-		VerticalRotation   bool
-		DiagonalRotation   bool
+	Img   *ebiten.Image
+	Flips struct {
+		HorizontalFlip bool
+		VerticalFlip   bool
+		DiagonalFlip   bool
 	}
 }
 

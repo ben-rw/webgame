@@ -170,13 +170,13 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 			tile := shared.Tile{}
 
 			if id&int(shared.FlagFlippedHorizontally) != 0 {
-				tile.Rotations.HorizontalRotation = true
+				tile.Flips.HorizontalFlip = true
 			}
 			if id&int(shared.FlagFlippedVertically) != 0 {
-				tile.Rotations.VerticalRotation = true
+				tile.Flips.VerticalFlip = true
 			}
 			if id&int(shared.FlagFlippedDiagonally) != 0 {
-				tile.Rotations.DiagonalRotation = true
+				tile.Flips.DiagonalFlip = true
 			}
 
 			id &= ^(int(shared.FlagFlippedHorizontally) |
@@ -184,18 +184,26 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 				int(shared.FlagFlippedDiagonally) |
 				int(shared.FlagRotatedHexagonal120))
 
-			if tile.Rotations.DiagonalRotation && tile.Rotations.HorizontalRotation {
+			switch {
+			case tile.Flips.HorizontalFlip && tile.Flips.VerticalFlip:
+				opts.GeoM.Scale(-1, -1)
+				x += 16
+				y += 16
+			case tile.Flips.DiagonalFlip && tile.Flips.HorizontalFlip:
 				opts.GeoM.Translate(-shared.TileSize/2, -shared.TileSize/2)
-				opts.GeoM.Rotate(math.Pi)
+				opts.GeoM.Rotate(math.Pi / 2)
 				opts.GeoM.Translate(shared.TileSize/2, shared.TileSize/2)
-			}
-			if tile.Rotations.HorizontalRotation {
+			case tile.Flips.HorizontalFlip:
 				opts.GeoM.Scale(-1, 1)
 				x += 16
-			}
-			if tile.Rotations.VerticalRotation {
+			case tile.Flips.DiagonalFlip && tile.Flips.VerticalFlip:
+				opts.GeoM.Translate(-shared.TileSize/2, -shared.TileSize/2)
+				opts.GeoM.Rotate(3 * math.Pi / 2)
+				opts.GeoM.Translate(shared.TileSize/2, shared.TileSize/2)
+			case tile.Flips.VerticalFlip:
 				opts.GeoM.Scale(1, -1)
 				y += 16
+			default:
 			}
 
 			opts.GeoM.Translate(float64(x), float64(y))
@@ -242,12 +250,10 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 	waitText := "Shoot zombies for power-ups! Shoot your friends for glory!"
 	textOpts := text.DrawOptions{
 		LayoutOptions: text.LayoutOptions{
-			PrimaryAlign: 2,
+			PrimaryAlign: text.AlignEnd,
 		},
 	}
 	textOpts.GeoM.Translate(screenproperties.BottomRight())
-
-	textOpts.GeoM.Translate(w.camera.X, w.camera.Y)
 
 	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 }
