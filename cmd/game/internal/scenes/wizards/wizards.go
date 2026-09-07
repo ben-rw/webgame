@@ -1,16 +1,54 @@
 package wizards
 
 import (
+	"image"
+	"image/color"
+	"math"
+
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenproperties"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"math"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"log"
 )
+
+func CheckCollisionHorizontal(sprite *shared.Sprite, colliders []image.Rectangle) {
+	for _, collider := range colliders {
+		if collider.Overlaps(image.Rect(
+			int(sprite.X),
+			int(sprite.Y),
+			int(sprite.X)+16,
+			int(sprite.Y)+16,
+		)) {
+			if sprite.Dx > 0.0 {
+				sprite.X = float64(collider.Min.X) - shared.TileSize
+			} else if sprite.Dx < 0.0 {
+				sprite.X = float64(collider.Max.X)
+			}
+		}
+	}
+}
+
+func CheckCollisionVertical(sprite *shared.Sprite, colliders []image.Rectangle) {
+	for _, collider := range colliders {
+		if collider.Overlaps(image.Rect(
+			int(sprite.X),
+			int(sprite.Y),
+			int(sprite.X)+16,
+			int(sprite.Y)+16,
+		)) {
+			if sprite.Dy > 0.0 {
+				sprite.Y = float64(collider.Min.Y) - shared.TileSize
+			} else if sprite.Dy < 0.0 {
+				sprite.Y = float64(collider.Max.Y)
+			}
+		}
+	}
+}
 
 type Camera struct {
 	X, Y float64
@@ -66,6 +104,7 @@ type Wizards struct {
 	tilemapJSON *shared.TilemapJSON
 	tileCache   map[int]*shared.Tile
 	camera      *Camera
+	colliders   []image.Rectangle
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
@@ -94,6 +133,9 @@ func NewWizards(c *ws.Connection) *Wizards {
 		tilemapJSON: tilemap,
 		tileCache:   tileCache,
 		camera:      NewCamera(0.0, 0.0),
+		colliders: []image.Rectangle{
+			image.Rect(100, 100, 116, 116),
+		},
 	}
 }
 
@@ -134,21 +176,43 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 		}
 	}
 
+	w.Player.Dx = 0
+	w.Player.Dy = 0
+
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		w.Player.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
-		w.Player.NameTag.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.Dx = w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		w.Player.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
-		w.Player.NameTag.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.Dx = -w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		w.Player.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
-		w.Player.NameTag.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.Dy = -w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		w.Player.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
-		w.Player.NameTag.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.Dy = w.PlayerStats[w.Player.Data.Name].MoveSpeed
+	}
+
+	w.Player.X += w.Player.Dx
+	w.Player.NameTag.X = w.Player.X + shared.TileSize/2
+	CheckCollisionHorizontal(w.Player.Sprite, w.colliders)
+
+	w.Player.Y += w.Player.Dy
+	w.Player.NameTag.Y = w.Player.Y + shared.TileSize + 2
+	CheckCollisionVertical(w.Player.Sprite, w.colliders)
+
+	for _, collider := range w.colliders {
+		if collider.Overlaps(image.Rect(
+			int(w.Player.X),
+			int(w.Player.Y),
+			int(w.Player.X)+16,
+			int(w.Player.Y)+16,
+		)) {
+			if w.Player.Dy > 0.0 {
+				w.Player.Y = float64(collider.Min.Y) - shared.TileSize
+			} else if w.Player.Dy < 0.0 {
+				w.Player.Y = float64(collider.Max.Y)
+			}
+		}
 	}
 
 	for _, player := range w.Players {
@@ -229,6 +293,20 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 
 			opts.GeoM.Reset()
 		}
+	}
+
+	for _, collider := range w.colliders {
+		vector.StrokeRect(
+			screen,
+			float32(collider.Min.X)+float32(w.camera.X),
+			float32(collider.Min.Y)+float32(w.camera.Y),
+			float32(collider.Dx()),
+			float32(collider.Dx()),
+			1.0,
+			color.RGBA{255, 0, 0, 255},
+			false,
+		)
+		opts.GeoM.Reset()
 	}
 
 	for _, player := range w.Players {

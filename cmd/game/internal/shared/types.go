@@ -98,7 +98,7 @@ func (p *Player) GetActiveAnimation() *animations.Animation {
 	if p.Dy > 0 {
 		return p.Animations[Down]
 	}
-	if p.Dx < 0 {
+	if p.Dy < 0 {
 		return p.Animations[Up]
 	}
 	return p.Animations[Idle]
