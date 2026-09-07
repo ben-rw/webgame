@@ -75,16 +75,6 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 	screen.Fill(screenproperties.BackgroundColor)
 
 	opts := ebiten.DrawImageOptions{}
-	// opts.GeoM.Translate(l.Player.X, l.Player.Y)
-
-	// screen.DrawImage(
-	// 	l.Player.Img.SubImage(
-	// 		l.Player.SpriteSheet.Rect(l.Player.ActiveAnimation.Frame()),
-	// 	).(*ebiten.Image),
-	// 	&opts,
-	// )
-	//
-	// opts.GeoM.Reset()
 
 	for _, player := range l.Players {
 		opts.GeoM.Translate(player.X, player.Y)
@@ -110,11 +100,22 @@ func (l *Lobby) Draw(screen *ebiten.Image) {
 		textOpts.GeoM.Reset()
 	}
 
+	controlsText := "Controls: 'Left Click' to Attack, 'Right Click' to Reflect, 'Q' to Repel"
+	textOpts := text.DrawOptions{
+		LayoutOptions: text.LayoutOptions{
+			PrimaryAlign: 2,
+		},
+	}
+	textOpts.GeoM.Translate(screenproperties.TopRight())
+	text.Draw(screen, controlsText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+
+	textOpts.GeoM.Reset()
+
 	waitText := "Waiting for host..."
 	if l.Player.Data.Host == true {
 		waitText = "Press ENTER to start!"
 	}
-	textOpts := text.DrawOptions{
+	textOpts = text.DrawOptions{
 		LayoutOptions: text.LayoutOptions{
 			PrimaryAlign: 2,
 		},

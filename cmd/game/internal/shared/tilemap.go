@@ -10,6 +10,24 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+const TileSize = 16
+
+type Tile struct {
+	Img       *ebiten.Image
+	Rotations struct {
+		HorizontalRotation bool
+		VerticalRotation   bool
+		DiagonalRotation   bool
+	}
+}
+
+const (
+	FlagFlippedHorizontally uint32 = 1 << 31
+	FlagFlippedVertically   uint32 = 1 << 30
+	FlagFlippedDiagonally   uint32 = 1 << 29
+	FlagRotatedHexagonal120 uint32 = 1 << 28 //not used. tiled docs say to unset it anyway
+)
+
 type TilemapJSON struct {
 	Layers   []*TilemapLayerJSON `json:"layers"`
 	Tilesets []*Tileset          `json:"tilesets"`
@@ -78,16 +96,24 @@ func newTileImgList(tilemapJSON *TilemapJSON) ([]*ebiten.Image, error) {
 	return imgList, nil
 }
 
-func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*ebiten.Image, error) {
-	imgMap := make(map[int]*ebiten.Image)
+func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*Tile, error) {
+	imgMap := make(map[int]*Tile)
 	tileImgList, err := newTileImgList(tilemapJSON)
 	for _, layer := range tilemapJSON.Layers {
 		for _, id := range layer.Data {
 			if id == 0 {
 				continue
 			}
+
+			id &= ^(int(FlagFlippedHorizontally) |
+				int(FlagFlippedVertically) |
+				int(FlagFlippedDiagonally) |
+				int(FlagRotatedHexagonal120))
+
+			fmt.Printf("id: %v\n", id)
+
 			if _, ok := imgMap[id]; !ok {
-				tileImgIndex := getTileImgIndex(id, tilemapJSON)
+				tileImgIndex := getTileImgIndex(int(id), tilemapJSON)
 				if err != nil {
 					return nil, err
 				}
@@ -100,7 +126,9 @@ func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*ebiten.Image, error) {
 				srcX *= TileSize
 				srcY *= TileSize
 
-				imgMap[id] = tileImg.SubImage(image.Rect(srcX, srcY, srcX+TileSize, srcY+TileSize)).(*ebiten.Image)
+				imgMap[id] = &Tile{
+					Img: tileImg.SubImage(image.Rect(srcX, srcY, srcX+TileSize, srcY+TileSize)).(*ebiten.Image),
+				}
 			}
 		}
 	}

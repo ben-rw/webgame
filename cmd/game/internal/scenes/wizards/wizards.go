@@ -7,6 +7,7 @@ import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"math"
 
 	"log"
 )
@@ -34,10 +35,10 @@ type Wizards struct {
 	shared.Roster
 	Conn        *ws.Connection
 	Sprites     []*shared.Sprite
-	PlayerStats map[*shared.Player]Stats
+	PlayerStats map[string]*Stats
 	Projectiles []*Projectile
 	tilemapJSON *shared.TilemapJSON
-	tileCache   map[int]*ebiten.Image
+	tileCache   map[int]*shared.Tile
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
@@ -61,7 +62,7 @@ func NewWizards(c *ws.Connection) *Wizards {
 		},
 		Conn:        c,
 		Sprites:     []*shared.Sprite{},
-		PlayerStats: make(map[*shared.Player]Stats, 8),
+		PlayerStats: make(map[string]*Stats, 8),
 		Projectiles: make([]*Projectile, 0),
 		tilemapJSON: tilemap,
 		tileCache:   tileCache,
@@ -78,11 +79,17 @@ func (w Wizards) Update(messages []protocol.Message) error {
 				continue
 			}
 
-			w.PlayerStats[w.Player] = Stats{
-				MoveSpeed:       defaultMoveSpeed,
-				ProjectileSpeed: defaultProjectileSpeed,
-				ProjectileSize:  defaultProjectileSize,
+			for _, player := range w.Players {
+				if _, ok := w.PlayerStats[player.Data.Name]; !ok {
+					w.PlayerStats[player.Data.Name] = &Stats{
+						MoveSpeed:       defaultMoveSpeed,
+						ProjectileSpeed: defaultProjectileSpeed,
+						ProjectileSize:  defaultProjectileSize,
+					}
+				}
 			}
+
+			log.Printf("initial player stats: %+v", w.PlayerStats[w.Player.Data.Name])
 
 			playerUpdateData := protocol.PlayerUpdateData{
 				PlayerData: w.Player.Data,
@@ -101,21 +108,24 @@ func (w Wizards) Update(messages []protocol.Message) error {
 		}
 	}
 
+	log.Printf("player stats: %+v", w.PlayerStats[w.Player.Data.Name])
+	log.Printf("playerdata: %+v", w.Player.Data)
+
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		w.Player.X += w.PlayerStats[w.Player].MoveSpeed
-		w.Player.NameTag.X += w.PlayerStats[w.Player].MoveSpeed
+		w.Player.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		w.Player.X -= w.PlayerStats[w.Player].MoveSpeed
-		w.Player.NameTag.X -= w.PlayerStats[w.Player].MoveSpeed
+		w.Player.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.X -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		w.Player.Y -= w.PlayerStats[w.Player].MoveSpeed
-		w.Player.NameTag.Y -= w.PlayerStats[w.Player].MoveSpeed
+		w.Player.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.Y -= w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		w.Player.Y += w.PlayerStats[w.Player].MoveSpeed
-		w.Player.NameTag.Y += w.PlayerStats[w.Player].MoveSpeed
+		w.Player.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.Player.NameTag.Y += w.PlayerStats[w.Player.Data.Name].MoveSpeed
 	}
 
 	for _, player := range w.Players {
@@ -140,10 +150,41 @@ func (w Wizards) Draw(screen *ebiten.Image) {
 			x *= shared.TileSize
 			y *= shared.TileSize
 
+			tile := shared.Tile{}
+
+			if id&int(shared.FlagFlippedHorizontally) != 0 {
+				tile.Rotations.HorizontalRotation = true
+			}
+			if id&int(shared.FlagFlippedVertically) != 0 {
+				tile.Rotations.VerticalRotation = true
+			}
+			if id&int(shared.FlagFlippedDiagonally) != 0 {
+				tile.Rotations.DiagonalRotation = true
+			}
+
+			id &= ^(int(shared.FlagFlippedHorizontally) |
+				int(shared.FlagFlippedVertically) |
+				int(shared.FlagFlippedDiagonally) |
+				int(shared.FlagRotatedHexagonal120))
+
+			if tile.Rotations.DiagonalRotation && tile.Rotations.HorizontalRotation {
+				opts.GeoM.Translate(-shared.TileSize/2, -shared.TileSize/2)
+				opts.GeoM.Rotate(math.Pi)
+				opts.GeoM.Translate(shared.TileSize/2, shared.TileSize/2)
+			}
+			if tile.Rotations.HorizontalRotation {
+				opts.GeoM.Scale(-1, 1)
+				x += 16
+			}
+			if tile.Rotations.VerticalRotation {
+				opts.GeoM.Scale(1, -1)
+				y += 16
+			}
+
 			opts.GeoM.Translate(float64(x), float64(y))
 
 			screen.DrawImage(
-				w.tileCache[id],
+				w.tileCache[id].Img,
 				&opts,
 			)
 
