@@ -4,9 +4,14 @@ import "image/color"
 
 var BackgroundColor = color.RGBA{0, 105, 150, 1}
 
+const (
+	defaultScreenWidth  = 320
+	defaultScreenHeight = 180
+)
+
 var (
-	ScreenWidth  float64 = 320
-	ScreenHeight float64 = 180
+	ScreenWidth  float64 = defaultScreenWidth
+	ScreenHeight float64 = defaultScreenHeight
 )
 
 func Center() (float64, float64) {

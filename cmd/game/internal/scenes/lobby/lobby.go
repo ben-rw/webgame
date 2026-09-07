@@ -82,14 +82,17 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 }
 
 func (l *Lobby) Draw(screen *ebiten.Image) {
-	opts := ebiten.DrawImageOptions{}
-	s := l.Background.Bounds().Size()
-	scaleX := screenproperties.ScreenWidth / float64(s.X)
-	scaleY := screenproperties.ScreenHeight / float64(s.Y)
-	opts.GeoM.Scale(scaleX, scaleY)
-	screen.DrawImage(l.Background, &opts)
+	screen.Fill(screenproperties.BackgroundColor)
 
-	opts.GeoM.Reset()
+	opts := ebiten.DrawImageOptions{}
+
+	// s := l.Background.Bounds().Size()
+	// scaleX := screenproperties.ScreenWidth / float64(s.X)
+	// scaleY := screenproperties.ScreenHeight / float64(s.Y)
+	// opts.GeoM.Scale(scaleX, scaleY)
+	// screen.DrawImage(l.Background, &opts)
+	//
+	// opts.GeoM.Reset()
 
 	for _, player := range l.Players {
 		opts.GeoM.Translate(player.X, player.Y)

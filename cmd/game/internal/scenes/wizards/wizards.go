@@ -12,6 +12,24 @@ import (
 	"log"
 )
 
+type Camera struct {
+	X, Y float64
+}
+
+func NewCamera(x, y float64) *Camera {
+	return &Camera{
+		X: x,
+		Y: y,
+	}
+}
+
+func (c *Camera) FollowTarget(targetX, targetY float64) {
+	targetX += shared.TileSize / 2
+	targetY += shared.TileSize / 2
+	c.X = -targetX + screenproperties.ScreenWidth/2.0
+	c.Y = -targetY + screenproperties.ScreenHeight/2.0
+}
+
 const (
 	defaultMoveSpeed       = 2
 	defaultProjectileSpeed = 5
@@ -39,6 +57,7 @@ type Wizards struct {
 	Projectiles []*Projectile
 	tilemapJSON *shared.TilemapJSON
 	tileCache   map[int]*shared.Tile
+	camera      *Camera
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
@@ -66,6 +85,7 @@ func NewWizards(c *ws.Connection) *Wizards {
 		Projectiles: make([]*Projectile, 0),
 		tilemapJSON: tilemap,
 		tileCache:   tileCache,
+		camera:      NewCamera(0.0, 0.0),
 	}
 }
 
@@ -128,6 +148,8 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 		player.ActiveAnimation.Update()
 	}
 
+	w.camera.FollowTarget(w.Player.X, w.Player.Y)
+
 	return nil
 }
 
@@ -178,6 +200,8 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 
 			opts.GeoM.Translate(float64(x), float64(y))
 
+			opts.GeoM.Translate(w.camera.X, w.camera.Y)
+
 			screen.DrawImage(
 				w.tileCache[id].Img,
 				&opts,
@@ -189,6 +213,8 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 
 	for _, player := range w.Players {
 		opts.GeoM.Translate(player.X, player.Y)
+
+		opts.GeoM.Translate(w.camera.X, w.camera.Y)
 
 		player.ActiveAnimation = player.GetActiveAnimation()
 		screen.DrawImage(
@@ -205,6 +231,9 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 			LayoutOptions: player.NameTag.LayoutOptions,
 		}
 		textOpts.GeoM.Translate(player.NameTag.X, player.NameTag.Y)
+
+		textOpts.GeoM.Translate(w.camera.X, w.camera.Y)
+
 		text.Draw(screen, player.Data.Name, player.NameTag.Face, &textOpts)
 
 		textOpts.GeoM.Reset()
@@ -217,5 +246,8 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 		},
 	}
 	textOpts.GeoM.Translate(screenproperties.BottomRight())
+
+	textOpts.GeoM.Translate(w.camera.X, w.camera.Y)
+
 	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 }
