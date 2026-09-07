@@ -6,26 +6,36 @@ import (
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"log"
 )
 
+const BackgroundPath = "assets/images/center_background.png"
+
 type Lobby struct {
 	shared.Roster
-	Conn    *ws.Connection
-	Sprites []*shared.Sprite
+	Conn       *ws.Connection
+	Sprites    []*shared.Sprite
+	Background *ebiten.Image
 }
 
 func NewLobby(c *ws.Connection) *Lobby {
+	bg, _, err := ebitenutil.NewImageFromFileSystem(shared.AssetsFS, BackgroundPath)
+	if err != nil {
+		log.Printf("couldn't load background: %v")
+	}
+
 	return &Lobby{
 		Roster: shared.Roster{
 			Players: map[string]*shared.Player{},
 			Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		},
-		Conn:    c,
-		Sprites: []*shared.Sprite{},
+		Conn:       c,
+		Sprites:    []*shared.Sprite{},
+		Background: bg,
 	}
 }
 
@@ -72,9 +82,14 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 }
 
 func (l *Lobby) Draw(screen *ebiten.Image) {
-	screen.Fill(screenproperties.BackgroundColor)
-
 	opts := ebiten.DrawImageOptions{}
+	s := l.Background.Bounds().Size()
+	scaleX := screenproperties.ScreenWidth / float64(s.X)
+	scaleY := screenproperties.ScreenHeight / float64(s.Y)
+	opts.GeoM.Scale(scaleX, scaleY)
+	screen.DrawImage(l.Background, &opts)
+
+	opts.GeoM.Reset()
 
 	for _, player := range l.Players {
 		opts.GeoM.Translate(player.X, player.Y)

@@ -82,11 +82,11 @@
             }
         },
         "ninja_dungeon.json": {
-            "scale": 1.3434443288241413,
+            "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 800.1820223848806,
-                "y": 480.85356880058873
+                "x": -709.3333333333333,
+                "y": 92
             }
         },
         "ninja_dungeon.tmx": {
