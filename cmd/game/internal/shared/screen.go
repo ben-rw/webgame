@@ -1,4 +1,4 @@
-package screenproperties
+package shared
 
 import "image/color"
 

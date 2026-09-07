@@ -2,7 +2,6 @@ package memory
 
 import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
-	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenproperties"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -67,7 +66,7 @@ func (m *Memory) Update(messages []protocol.Message) error {
 }
 
 func (m *Memory) Draw(screen *ebiten.Image) {
-	screen.Fill(screenproperties.BackgroundColor)
+	screen.Fill(shared.BackgroundColor)
 
 	opts := ebiten.DrawImageOptions{}
 	// opts.GeoM.Translate(m.Player.X, m.Player.Y)
@@ -113,6 +112,6 @@ func (m *Memory) Draw(screen *ebiten.Image) {
 			PrimaryAlign: 2,
 		},
 	}
-	textOpts.GeoM.Translate(screenproperties.BottomRight())
+	textOpts.GeoM.Translate(shared.BottomRight())
 	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 }

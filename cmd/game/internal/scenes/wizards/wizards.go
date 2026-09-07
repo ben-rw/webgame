@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
-	"github.com/ben-rw/webgame/cmd/game/internal/shared/screenproperties"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,66 +14,6 @@ import (
 
 	"log"
 )
-
-func CheckCollisionHorizontal(sprite *shared.Sprite, colliders []image.Rectangle) {
-	for _, collider := range colliders {
-		if collider.Overlaps(image.Rect(
-			int(sprite.X),
-			int(sprite.Y),
-			int(sprite.X)+16,
-			int(sprite.Y)+16,
-		)) {
-			if sprite.Dx > 0.0 {
-				sprite.X = float64(collider.Min.X) - shared.TileSize
-			} else if sprite.Dx < 0.0 {
-				sprite.X = float64(collider.Max.X)
-			}
-		}
-	}
-}
-
-func CheckCollisionVertical(sprite *shared.Sprite, colliders []image.Rectangle) {
-	for _, collider := range colliders {
-		if collider.Overlaps(image.Rect(
-			int(sprite.X),
-			int(sprite.Y),
-			int(sprite.X)+16,
-			int(sprite.Y)+16,
-		)) {
-			if sprite.Dy > 0.0 {
-				sprite.Y = float64(collider.Min.Y) - shared.TileSize
-			} else if sprite.Dy < 0.0 {
-				sprite.Y = float64(collider.Max.Y)
-			}
-		}
-	}
-}
-
-type Camera struct {
-	X, Y float64
-}
-
-func NewCamera(x, y float64) *Camera {
-	return &Camera{
-		X: x,
-		Y: y,
-	}
-}
-
-func (c *Camera) FollowTarget(targetX, targetY float64) {
-	targetX += shared.TileSize / 2
-	targetY += shared.TileSize / 2
-	c.X = -targetX + screenproperties.ScreenWidth/2.0
-	c.Y = -targetY + screenproperties.ScreenHeight/2.0
-}
-
-func (c *Camera) Constrain(tilemapWidthPixels, tilemapHeightPixels float64) {
-	c.X = math.Min(c.X, 0.0)
-	c.Y = math.Min(c.Y, 0.0)
-
-	c.X = math.Max(c.X, screenproperties.ScreenWidth-tilemapWidthPixels)
-	c.Y = math.Max(c.Y, screenproperties.ScreenHeight-tilemapHeightPixels)
-}
 
 const (
 	defaultMoveSpeed       = 2
@@ -103,14 +42,14 @@ type Wizards struct {
 	Projectiles []*Projectile
 	tilemapJSON *shared.TilemapJSON
 	tileCache   map[int]*shared.Tile
-	camera      *Camera
+	camera      *shared.Camera
 	colliders   []image.Rectangle
 }
 
 func NewWizards(c *ws.Connection) *Wizards {
 	log.Println("scene changed to Wizards")
-	screenproperties.ScreenHeight = screenproperties.ScreenHeight * 2
-	screenproperties.ScreenWidth = screenproperties.ScreenWidth * 2
+	shared.ScreenHeight = shared.ScreenHeight * 2
+	shared.ScreenWidth = shared.ScreenWidth * 2
 
 	tilemap, err := shared.NewTilemapJSON(tilemapPath)
 	if err != nil {
@@ -132,7 +71,7 @@ func NewWizards(c *ws.Connection) *Wizards {
 		Projectiles: make([]*Projectile, 0),
 		tilemapJSON: tilemap,
 		tileCache:   tileCache,
-		camera:      NewCamera(0.0, 0.0),
+		camera:      shared.NewCamera(0.0, 0.0),
 		colliders: []image.Rectangle{
 			image.Rect(100, 100, 116, 116),
 		},
@@ -194,11 +133,11 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 
 	w.Player.X += w.Player.Dx
 	w.Player.NameTag.X = w.Player.X + shared.TileSize/2
-	CheckCollisionHorizontal(w.Player.Sprite, w.colliders)
+	shared.CheckCollisionHorizontal(w.Player.Sprite, w.colliders)
 
 	w.Player.Y += w.Player.Dy
 	w.Player.NameTag.Y = w.Player.Y + shared.TileSize + 2
-	CheckCollisionVertical(w.Player.Sprite, w.colliders)
+	shared.CheckCollisionVertical(w.Player.Sprite, w.colliders)
 
 	for _, collider := range w.colliders {
 		if collider.Overlaps(image.Rect(
@@ -343,7 +282,7 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 			PrimaryAlign: text.AlignEnd,
 		},
 	}
-	textOpts.GeoM.Translate(screenproperties.BottomRight())
+	textOpts.GeoM.Translate(shared.BottomRight())
 
 	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 }
