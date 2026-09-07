@@ -30,6 +30,14 @@ func (c *Camera) FollowTarget(targetX, targetY float64) {
 	c.Y = -targetY + screenproperties.ScreenHeight/2.0
 }
 
+func (c *Camera) Constrain(tilemapWidthPixels, tilemapHeightPixels float64) {
+	c.X = math.Min(c.X, 0.0)
+	c.Y = math.Min(c.Y, 0.0)
+
+	c.X = math.Max(c.X, screenproperties.ScreenWidth-tilemapWidthPixels)
+	c.Y = math.Max(c.Y, screenproperties.ScreenHeight-tilemapHeightPixels)
+}
+
 const (
 	defaultMoveSpeed       = 2
 	defaultProjectileSpeed = 5
@@ -149,6 +157,10 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 	}
 
 	w.camera.FollowTarget(w.Player.X, w.Player.Y)
+	w.camera.Constrain(
+		float64(w.tilemapJSON.Layers[0].Width)*16.0,
+		float64(w.tilemapJSON.Layers[0].Height)*16.0,
+	)
 
 	return nil
 }
