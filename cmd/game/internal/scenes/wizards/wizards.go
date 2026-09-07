@@ -69,7 +69,7 @@ func NewWizards(c *ws.Connection) *Wizards {
 	}
 }
 
-func (w Wizards) Update(messages []protocol.Message) error {
+func (w *Wizards) Update(messages []protocol.Message) error {
 	for _, message := range messages {
 		switch message.Type {
 		case protocol.JoinResponse:
@@ -89,8 +89,6 @@ func (w Wizards) Update(messages []protocol.Message) error {
 				}
 			}
 
-			log.Printf("initial player stats: %+v", w.PlayerStats[w.Player.Data.Name])
-
 			playerUpdateData := protocol.PlayerUpdateData{
 				PlayerData: w.Player.Data,
 			}
@@ -107,9 +105,6 @@ func (w Wizards) Update(messages []protocol.Message) error {
 		default:
 		}
 	}
-
-	log.Printf("player stats: %+v", w.PlayerStats[w.Player.Data.Name])
-	log.Printf("playerdata: %+v", w.Player.Data)
 
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
 		w.Player.X += w.PlayerStats[w.Player.Data.Name].MoveSpeed
@@ -136,7 +131,7 @@ func (w Wizards) Update(messages []protocol.Message) error {
 	return nil
 }
 
-func (w Wizards) Draw(screen *ebiten.Image) {
+func (w *Wizards) Draw(screen *ebiten.Image) {
 	opts := ebiten.DrawImageOptions{}
 
 	for _, layer := range w.tilemapJSON.Layers {
