@@ -15,11 +15,6 @@ const (
 	nameTagSize = 4
 )
 
-type Sprite struct {
-	Img          *ebiten.Image
-	X, Y, Dx, Dy float64
-}
-
 type Player struct {
 	*Sprite
 	Data            *protocol.PlayerData
