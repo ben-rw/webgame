@@ -29,6 +29,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 			for _, player := range w.Players {
 				if _, ok := w.wizards[player.Data.Name]; !ok {
 					wizard := NewWizard(player)
+					wizard.JustJoined = false
 					w.wizards[wizard.Data.Name] = wizard
 				}
 			}
@@ -103,18 +104,20 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 			tolerance := 1.0
 			if enemy.X <= w.wizard.X-tolerance {
 				enemy.Dx = enemy.MoveSpeed()
-			} else if enemy.X >= w.wizard.X+tolerance {
+			}
+			if enemy.X >= w.wizard.X+tolerance {
 				enemy.Dx = -enemy.MoveSpeed()
 			}
 			if enemy.Y <= w.wizard.Y-tolerance {
 				enemy.Dy = enemy.MoveSpeed()
-			} else if enemy.Y >= w.wizard.Y+tolerance {
+			}
+			if enemy.Y >= w.wizard.Y+tolerance {
 				enemy.Dy = -enemy.MoveSpeed()
 			}
 
 			enemy.X += enemy.Dx
-			enemy.Y += enemy.Dy
 			shared.CheckCollisionHorizontal(enemy.Sprite, w.colliders)
+			enemy.Y += enemy.Dy
 			shared.CheckCollisionVertical(enemy.Sprite, w.colliders)
 		}
 	}
@@ -126,19 +129,37 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 
 	clicked := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 	cX, cY := ebiten.CursorPosition()
-	// fcX := cX.(float64)
-	// fcY := cY.(float64)
 	cX -= int(w.camera.X)
 	cY -= int(w.camera.Y)
+	w.wizard.BasicCombat.Update()
+
+	wizardRect := image.Rect(
+		int(w.wizard.X),
+		int(w.wizard.Y),
+		int(w.wizard.X)+shared.TileSize,
+		int(w.wizard.Y)+shared.TileSize,
+	)
 
 	deadEnemies := make(map[int]struct{})
 	for i, enemy := range w.enemies {
+		enemy.EnemyCombat.Update()
 		rect := image.Rect(
 			int(enemy.X),
 			int(enemy.Y),
 			int(enemy.X)+shared.TileSize,
 			int(enemy.Y)+shared.TileSize,
 		)
+
+		if rect.Overlaps(wizardRect) {
+			if enemy.EnemyCombat.Attack() {
+				w.wizard.BasicCombat.Damage(enemy.AttackPower())
+				if w.wizard.BasicCombat.Health() <= 0 {
+					log.Println("YOU DIED")
+				} else {
+					//TODO: player pushed away by enemy
+				}
+			}
+		}
 
 		if cX > rect.Min.X &&
 			cX < rect.Max.X &&
