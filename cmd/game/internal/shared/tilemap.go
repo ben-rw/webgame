@@ -110,8 +110,6 @@ func NewTileCache(tilemapJSON *TilemapJSON) (map[int]*Tile, error) {
 				int(FlagFlippedDiagonally) |
 				int(FlagRotatedHexagonal120))
 
-			fmt.Printf("id: %v\n", id)
-
 			if _, ok := imgMap[id]; !ok {
 				tileImgIndex := getTileImgIndex(int(id), tilemapJSON)
 				if err != nil {

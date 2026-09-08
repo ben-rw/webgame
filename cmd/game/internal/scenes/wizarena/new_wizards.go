@@ -1,4 +1,4 @@
-package wizards
+package wizarena
 
 import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
@@ -9,17 +9,8 @@ import (
 )
 
 const (
-	defaultMoveSpeed       = 2
-	defaultProjectileSpeed = 5
-	defaultProjectileSize  = 1
-	tilemapPath            = "assets/maps/ninja_dungeon.json"
+	tilemapPath = "assets/maps/ninja_dungeon.json"
 )
-
-type Stats struct {
-	MoveSpeed       float64
-	ProjectileSpeed float64
-	ProjectileSize  float64
-}
 
 type Projectile struct {
 	*shared.Sprite
@@ -27,19 +18,26 @@ type Projectile struct {
 	Size  float64
 }
 
-type Wizards struct {
+type WizardPlayer struct {
+	*shared.Player
+	*shared.BasicCombat
+}
+
+type WizArena struct {
 	shared.Roster
 	Conn        *ws.Connection
 	Sprites     []*shared.Sprite
-	PlayerStats map[string]*Stats
-	Projectiles []*Projectile
+	wizard      *WizardPlayer
+	wizards     map[string]*WizardPlayer
+	enemies     []*shared.Enemy
+	projectiles []*Projectile
 	tilemapJSON *shared.TilemapJSON
 	tileCache   map[int]*shared.Tile
 	camera      *shared.Camera
 	colliders   []image.Rectangle
 }
 
-func NewWizards(c *ws.Connection) *Wizards {
+func NewWizArena(c *ws.Connection) *WizArena {
 	log.Println("scene changed to Wizards")
 	shared.ScreenHeight = shared.ScreenHeight * 2
 	shared.ScreenWidth = shared.ScreenWidth * 2
@@ -53,20 +51,40 @@ func NewWizards(c *ws.Connection) *Wizards {
 		log.Printf("couldn't build tile cache: %v", err)
 	}
 
-	return &Wizards{
+	w := &WizArena{
 		Roster: shared.Roster{
 			Players: make(map[string]*shared.Player, 8),
 			Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		},
 		Conn:        c,
 		Sprites:     []*shared.Sprite{},
-		PlayerStats: make(map[string]*Stats, 8),
-		Projectiles: make([]*Projectile, 0),
+		wizards:     make(map[string]*WizardPlayer, 8),
+		enemies:     make([]*shared.Enemy, 0),
+		projectiles: make([]*Projectile, 0),
 		tilemapJSON: tilemap,
 		tileCache:   tileCache,
 		camera:      shared.NewCamera(0.0, 0.0),
 		colliders: []image.Rectangle{
 			image.Rect(100, 100, 116, 116),
 		},
+	}
+
+	w.enemies = append(w.enemies, shared.NewEnemy(shared.Skeleton, true, 400, 300))
+	w.enemies = append(w.enemies, shared.NewEnemy(shared.Skeleton, true, 200, 200))
+	w.enemies = append(w.enemies, shared.NewEnemy(shared.Skeleton, true, 400, 400))
+
+	return w
+}
+
+func NewWizard(player *shared.Player) *WizardPlayer {
+	return &WizardPlayer{
+		player,
+		shared.NewBasicCombat(
+			shared.DefaultPlayerHealth,
+			shared.DefaultPlayerAttackPower,
+			shared.DefaultPlayerMoveSpeed,
+			shared.DefaultProjectileSpeed,
+			shared.DefaultProjectileSize,
+		),
 	}
 }

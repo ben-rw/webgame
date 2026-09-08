@@ -1,4 +1,4 @@
-package wizards
+package wizarena
 
 import (
 	"image"
@@ -8,13 +8,15 @@ import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"log"
 )
 
-func (w *Wizards) Update(messages []protocol.Message) error {
+func (w *WizArena) Update(messages []protocol.Message) error {
 	for _, message := range messages {
 		switch message.Type {
 		case protocol.JoinResponse:
@@ -25,14 +27,13 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 			}
 
 			for _, player := range w.Players {
-				if _, ok := w.PlayerStats[player.Data.Name]; !ok {
-					w.PlayerStats[player.Data.Name] = &Stats{
-						MoveSpeed:       defaultMoveSpeed,
-						ProjectileSpeed: defaultProjectileSpeed,
-						ProjectileSize:  defaultProjectileSize,
-					}
+				if _, ok := w.wizards[player.Data.Name]; !ok {
+					wizard := NewWizard(player)
+					w.wizards[wizard.Data.Name] = wizard
 				}
 			}
+
+			w.wizard = w.wizards[w.Player.Data.Name]
 
 			playerUpdateData := protocol.PlayerUpdateData{
 				PlayerData: w.Player.Data,
@@ -51,51 +52,119 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 		}
 	}
 
-	w.Player.Dx = 0
-	w.Player.Dy = 0
+	w.wizard.Dx = 0
+	w.wizard.Dy = 0
 
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		w.Player.Dx = w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.wizard.Dx = w.wizard.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		w.Player.Dx = -w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.wizard.Dx = -w.wizard.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		w.Player.Dy = -w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.wizard.Dy = -w.wizard.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		w.Player.Dy = w.PlayerStats[w.Player.Data.Name].MoveSpeed
+		w.wizard.Dy = w.wizard.MoveSpeed()
 	}
 
-	w.Player.X += w.Player.Dx
-	w.Player.NameTag.X = w.Player.X + shared.TileSize/2
-	shared.CheckCollisionHorizontal(w.Player.Sprite, w.colliders)
+	w.wizard.X += w.wizard.Dx
+	w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
+	shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
 
-	w.Player.Y += w.Player.Dy
-	w.Player.NameTag.Y = w.Player.Y + shared.TileSize + 2
-	shared.CheckCollisionVertical(w.Player.Sprite, w.colliders)
+	w.wizard.Y += w.wizard.Dy
+	w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
+	shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
 
 	for _, collider := range w.colliders {
 		if collider.Overlaps(image.Rect(
-			int(w.Player.X),
-			int(w.Player.Y),
-			int(w.Player.X)+16,
-			int(w.Player.Y)+16,
+			int(w.wizard.X),
+			int(w.wizard.Y),
+			int(w.wizard.X)+16,
+			int(w.wizard.Y)+16,
 		)) {
-			if w.Player.Dy > 0.0 {
-				w.Player.Y = float64(collider.Min.Y) - shared.TileSize
-			} else if w.Player.Dy < 0.0 {
-				w.Player.Y = float64(collider.Max.Y)
+			if w.wizard.Dy > 0.0 {
+				w.wizard.Y = float64(collider.Min.Y) - shared.TileSize
+			} else if w.wizard.Dy < 0.0 {
+				w.wizard.Y = float64(collider.Max.Y)
 			}
 		}
 	}
 
-	for _, player := range w.Players {
-		player.ActiveAnimation = player.GetActiveAnimation()
-		player.ActiveAnimation.Update()
+	for _, wizard := range w.wizards {
+		wizard.ActiveAnimation = wizard.GetActiveAnimation()
+		wizard.ActiveAnimation.Update()
 	}
 
-	w.camera.FollowTarget(w.Player.X, w.Player.Y)
+	for _, enemy := range w.enemies {
+		enemy.Dx = 0
+		enemy.Dy = 0
+		if enemy.FollowsPlayer {
+			tolerance := 1.0
+			if enemy.X <= w.wizard.X-tolerance {
+				enemy.Dx = enemy.MoveSpeed()
+			} else if enemy.X >= w.wizard.X+tolerance {
+				enemy.Dx = -enemy.MoveSpeed()
+			}
+			if enemy.Y <= w.wizard.Y-tolerance {
+				enemy.Dy = enemy.MoveSpeed()
+			} else if enemy.Y >= w.wizard.Y+tolerance {
+				enemy.Dy = -enemy.MoveSpeed()
+			}
+
+			enemy.X += enemy.Dx
+			enemy.Y += enemy.Dy
+			shared.CheckCollisionHorizontal(enemy.Sprite, w.colliders)
+			shared.CheckCollisionVertical(enemy.Sprite, w.colliders)
+		}
+	}
+
+	for _, enemy := range w.enemies {
+		enemy.ActiveAnimation = enemy.GetActiveAnimation()
+		enemy.ActiveAnimation.Update()
+	}
+
+	clicked := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+	cX, cY := ebiten.CursorPosition()
+	// fcX := cX.(float64)
+	// fcY := cY.(float64)
+	cX -= int(w.camera.X)
+	cY -= int(w.camera.Y)
+
+	deadEnemies := make(map[int]struct{})
+	for i, enemy := range w.enemies {
+		rect := image.Rect(
+			int(enemy.X),
+			int(enemy.Y),
+			int(enemy.X)+shared.TileSize,
+			int(enemy.Y)+shared.TileSize,
+		)
+
+		if cX > rect.Min.X &&
+			cX < rect.Max.X &&
+			cY > rect.Min.Y &&
+			cY < rect.Max.Y {
+			if clicked {
+				enemy.Damage(w.wizard.AttackPower())
+
+				if enemy.Health() <= 0 {
+					deadEnemies[i] = struct{}{}
+					// TODO: player who last hit gets stat boost here
+				}
+			}
+		}
+	}
+	if len(deadEnemies) > 0 {
+		newEnemies := make([]*shared.Enemy, 0)
+		for i, enemy := range w.enemies {
+			if _, ok := deadEnemies[i]; !ok {
+				newEnemies = append(newEnemies, enemy)
+			}
+		}
+		w.enemies = newEnemies
+	}
+
+	w.camera.FollowTarget(w.wizard.X, w.wizard.Y)
 	w.camera.Constrain(
 		float64(w.tilemapJSON.Layers[0].Width)*16.0,
 		float64(w.tilemapJSON.Layers[0].Height)*16.0,
@@ -104,7 +173,7 @@ func (w *Wizards) Update(messages []protocol.Message) error {
 	return nil
 }
 
-func (w *Wizards) Draw(screen *ebiten.Image) {
+func (w *WizArena) Draw(screen *ebiten.Image) {
 	opts := ebiten.DrawImageOptions{}
 
 	for _, layer := range w.tilemapJSON.Layers {
@@ -184,30 +253,47 @@ func (w *Wizards) Draw(screen *ebiten.Image) {
 		opts.GeoM.Reset()
 	}
 
-	for _, player := range w.Players {
-		opts.GeoM.Translate(player.X, player.Y)
+	for _, wizard := range w.wizards {
+		opts.GeoM.Translate(wizard.X, wizard.Y)
 
 		opts.GeoM.Translate(w.camera.X, w.camera.Y)
 
-		player.ActiveAnimation = player.GetActiveAnimation()
+		wizard.ActiveAnimation = wizard.GetActiveAnimation()
 		screen.DrawImage(
-			player.Img.SubImage(
-				player.SpriteSheet.Rect(player.ActiveAnimation.Frame()),
+			wizard.Img.SubImage(
+				wizard.SpriteSheet.Rect(wizard.ActiveAnimation.Frame()),
 			).(*ebiten.Image),
 			&opts,
 		)
 
 		opts.GeoM.Reset()
 	}
-	for _, player := range w.Players {
+
+	for _, enemy := range w.enemies {
+		opts.GeoM.Translate(enemy.X, enemy.Y)
+
+		opts.GeoM.Translate(w.camera.X, w.camera.Y)
+
+		enemy.ActiveAnimation = enemy.GetActiveAnimation()
+		screen.DrawImage(
+			enemy.Img.SubImage(
+				enemy.SpriteSheet.Rect(enemy.ActiveAnimation.Frame()),
+			).(*ebiten.Image),
+			&opts,
+		)
+
+		opts.GeoM.Reset()
+	}
+
+	for _, wizard := range w.wizards {
 		textOpts := text.DrawOptions{
-			LayoutOptions: player.NameTag.LayoutOptions,
+			LayoutOptions: wizard.NameTag.LayoutOptions,
 		}
-		textOpts.GeoM.Translate(player.NameTag.X, player.NameTag.Y)
+		textOpts.GeoM.Translate(wizard.NameTag.X, wizard.NameTag.Y)
 
 		textOpts.GeoM.Translate(w.camera.X, w.camera.Y)
 
-		text.Draw(screen, player.Data.Name, player.NameTag.Face, &textOpts)
+		text.Draw(screen, wizard.Data.Name, wizard.NameTag.Face, &textOpts)
 
 		textOpts.GeoM.Reset()
 	}
