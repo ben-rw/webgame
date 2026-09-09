@@ -2,29 +2,39 @@ package lobby
 
 import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/sound"
 	"github.com/ben-rw/webgame/cmd/game/internal/ws"
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"time"
 
 	"log"
 )
 
-const BackgroundPath = "assets/images/center_background.png"
+const backgroundPath = "assets/images/center_background.png"
+const songPath = "assets/audio/music/ignition-loop.ogg"
 
 type Lobby struct {
 	shared.Roster
-	Conn       *ws.Connection
-	Sprites    []*shared.Sprite
-	Background *ebiten.Image
+	Conn        *ws.Connection
+	Sprites     []*shared.Sprite
+	Background  *ebiten.Image
+	audioPlayer *audio.Player
 }
 
 func NewLobby(c *ws.Connection) *Lobby {
-	bg, _, err := ebitenutil.NewImageFromFileSystem(shared.AssetsFS, BackgroundPath)
+	bg, _, err := ebitenutil.NewImageFromFileSystem(shared.AssetsFS, backgroundPath)
 	if err != nil {
 		log.Printf("couldn't load background: %v")
+	}
+
+	audioPlayer, err := sound.NewAudioPlayer(songPath)
+	if err != nil {
+		log.Printf("couldn't create audio player: %v", err)
 	}
 
 	return &Lobby{
@@ -32,9 +42,10 @@ func NewLobby(c *ws.Connection) *Lobby {
 			Players: map[string]*shared.Player{},
 			Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		},
-		Conn:       c,
-		Sprites:    []*shared.Sprite{},
-		Background: bg,
+		Conn:        c,
+		Sprites:     []*shared.Sprite{},
+		Background:  bg,
+		audioPlayer: audioPlayer,
 	}
 }
 
@@ -70,12 +81,24 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
 			SceneType: protocol.RandomScene,
 		})
+		go func() {
+			for l.audioPlayer.Volume() > 0.0 {
+				time.Sleep(time.Millisecond * 10)
+				l.audioPlayer.SetVolume(l.audioPlayer.Volume() - 0.005)
+				log.Println(l.audioPlayer.Volume())
+			}
+			l.audioPlayer.Close()
+		}()
 	}
 
 	for _, player := range l.Players {
 		player.ActiveAnimation = player.GetActiveAnimation()
 		player.ActiveAnimation.Update()
 	}
+
+	l.audioPlayer.SetVolume(0.2)
+	l.audioPlayer.SetBufferSize(500)
+	l.audioPlayer.Play()
 
 	return nil
 }

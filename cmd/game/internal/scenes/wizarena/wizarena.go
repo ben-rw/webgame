@@ -204,6 +204,10 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		float64(w.tilemapJSON.Layers[0].Height)*16.0,
 	)
 
+	w.audioPlayer.SetVolume(0.2)
+	w.audioPlayer.SetBufferSize(500)
+	w.audioPlayer.Play()
+
 	//TODO: when 1 player is left, start a new round
 	// while preserving stat boosts.
 	// at the end of the third round, announce the winner

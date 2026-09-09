@@ -1,15 +1,19 @@
 package wizarena
 
 import (
-	"github.com/ben-rw/webgame/cmd/game/internal/shared"
-	"github.com/ben-rw/webgame/cmd/game/internal/ws"
-	"github.com/ben-rw/webgame/internal/protocol"
 	"image"
 	"log"
+
+	"github.com/ben-rw/webgame/cmd/game/internal/shared"
+	"github.com/ben-rw/webgame/cmd/game/internal/shared/sound"
+	"github.com/ben-rw/webgame/cmd/game/internal/ws"
+	"github.com/ben-rw/webgame/internal/protocol"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 )
 
 const (
 	tilemapPath = "assets/maps/ninja_dungeon.json"
+	songPath    = "assets/audio/music/void-construct-loop.ogg"
 )
 
 type Projectile struct {
@@ -35,6 +39,7 @@ type WizArena struct {
 	tileCache   map[int]*shared.Tile
 	camera      *shared.Camera
 	colliders   []image.Rectangle
+	audioPlayer *audio.Player
 }
 
 func NewWizArena(c *ws.Connection) *WizArena {
@@ -49,6 +54,11 @@ func NewWizArena(c *ws.Connection) *WizArena {
 	tileCache, err := shared.NewTileCache(tilemap)
 	if err != nil {
 		log.Printf("couldn't build tile cache: %v", err)
+	}
+
+	audioPlayer, err := sound.NewAudioPlayer(songPath)
+	if err != nil {
+		log.Printf("couldn't create audio player: %v", err)
 	}
 
 	w := &WizArena{
@@ -67,6 +77,7 @@ func NewWizArena(c *ws.Connection) *WizArena {
 		colliders: []image.Rectangle{
 			image.Rect(100, 100, 116, 116),
 		},
+		audioPlayer: audioPlayer,
 	}
 
 	w.enemies = append(w.enemies, shared.NewEnemy(shared.Skeleton, true, 400, 300))
