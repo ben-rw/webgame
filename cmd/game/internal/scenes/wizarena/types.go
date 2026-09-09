@@ -14,6 +14,7 @@ import (
 const (
 	tilemapPath = "assets/maps/ninja_dungeon.json"
 	songPath    = "assets/audio/music/void-construct-loop.ogg"
+	introLen    = 3
 )
 
 type Projectile struct {
@@ -56,7 +57,7 @@ func NewWizArena(c *ws.Connection) *WizArena {
 		log.Printf("couldn't build tile cache: %v", err)
 	}
 
-	audioPlayer, err := sound.NewAudioPlayer(songPath)
+	audioPlayer, err := sound.NewAudioPlayer(songPath, true, introLen)
 	if err != nil {
 		log.Printf("couldn't create audio player: %v", err)
 	}

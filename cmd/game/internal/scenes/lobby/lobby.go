@@ -16,7 +16,7 @@ import (
 )
 
 const backgroundPath = "assets/images/center_background.png"
-const songPath = "assets/audio/music/ignition-loop.ogg"
+const songPath = "assets/audio/music/amalfi-coast-loop.ogg"
 
 type Lobby struct {
 	shared.Roster
@@ -32,7 +32,7 @@ func NewLobby(c *ws.Connection) *Lobby {
 		log.Printf("couldn't load background: %v")
 	}
 
-	audioPlayer, err := sound.NewAudioPlayer(songPath)
+	audioPlayer, err := sound.NewAudioPlayer(songPath, true, 0)
 	if err != nil {
 		log.Printf("couldn't create audio player: %v", err)
 	}

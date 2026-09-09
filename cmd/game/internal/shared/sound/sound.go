@@ -9,22 +9,32 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
 )
 
-const SampleRate = 48000
+const sampleRate = 48000
+const bytesPerSample = 4
 
-var audioContext = audio.NewContext(SampleRate)
+var audioContext = audio.NewContext(sampleRate)
 
-func NewAudioPlayer(filepath string) (*audio.Player, error) {
+func NewAudioPlayer(filepath string, loop bool, introLen int64) (*audio.Player, error) {
 	data, err := shared.AssetsFS.ReadFile(filepath)
-	stream, err := vorbis.DecodeWithSampleRate(SampleRate, bytes.NewReader(data))
+	if err != nil {
+		return &audio.Player{}, err
+	}
+	stream, err := vorbis.DecodeWithSampleRate(sampleRate, bytes.NewReader(data))
 	if err != nil {
 		return &audio.Player{}, err
 	}
 	var s io.ReadSeeker
-	s = audio.NewInfiniteLoop(stream, stream.Length())
-	audioPlayer, err := audioContext.NewPlayer(s)
-	if err != nil {
-		return &audio.Player{}, err
+	if loop {
+		if introLen > 0 {
+			s = audio.NewInfiniteLoopWithIntro(stream, introLen*bytesPerSample*sampleRate, stream.Length()-(introLen*bytesPerSample*sampleRate))
+		} else {
+			s = audio.NewInfiniteLoop(stream, stream.Length())
+		}
+	} else {
+		s = stream
 	}
+
+	audioPlayer, err := audioContext.NewPlayer(s)
 
 	return audioPlayer, nil
 }
