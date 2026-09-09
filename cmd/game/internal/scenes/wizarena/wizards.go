@@ -69,14 +69,6 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		w.wizard.Dy = w.wizard.Combat.MoveSpeed()
 	}
 
-	w.wizard.X += w.wizard.Dx
-	w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
-	shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
-
-	w.wizard.Y += w.wizard.Dy
-	w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
-	shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
-
 	for _, collider := range w.colliders {
 		if collider.Overlaps(image.Rect(
 			int(w.wizard.X),
@@ -166,14 +158,6 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 				w.wizard.Dx = normX * shared.TileSize * enemy.Combat.Knockback()
 				w.wizard.Dy = normY * shared.TileSize * enemy.Combat.Knockback()
 
-				w.wizard.X += w.wizard.Dx
-				w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
-				shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
-
-				w.wizard.Y += w.wizard.Dy
-				w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
-				shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
-
 				if w.wizard.Combat.Health() <= 0 {
 					log.Println("YOU DIED")
 				}
@@ -205,6 +189,14 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		}
 		w.enemies = newEnemies
 	}
+
+	w.wizard.X += w.wizard.Dx
+	w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
+	shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
+
+	w.wizard.Y += w.wizard.Dy
+	w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
+	shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
 
 	w.camera.FollowTarget(w.wizard.X, w.wizard.Y)
 	w.camera.Constrain(
