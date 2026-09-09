@@ -57,16 +57,16 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	w.wizard.Dy = 0
 
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		w.wizard.Dx = w.wizard.MoveSpeed()
+		w.wizard.Dx = w.wizard.Combat.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		w.wizard.Dx = -w.wizard.MoveSpeed()
+		w.wizard.Dx = -w.wizard.Combat.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		w.wizard.Dy = -w.wizard.MoveSpeed()
+		w.wizard.Dy = -w.wizard.Combat.MoveSpeed()
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		w.wizard.Dy = w.wizard.MoveSpeed()
+		w.wizard.Dy = w.wizard.Combat.MoveSpeed()
 	}
 
 	w.wizard.X += w.wizard.Dx
@@ -103,16 +103,16 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		if enemy.FollowsPlayer {
 			tolerance := 1.0
 			if enemy.X <= w.wizard.X-tolerance {
-				enemy.Dx = enemy.MoveSpeed()
+				enemy.Dx = enemy.Combat.MoveSpeed()
 			}
 			if enemy.X >= w.wizard.X+tolerance {
-				enemy.Dx = -enemy.MoveSpeed()
+				enemy.Dx = -enemy.Combat.MoveSpeed()
 			}
 			if enemy.Y <= w.wizard.Y-tolerance {
-				enemy.Dy = enemy.MoveSpeed()
+				enemy.Dy = enemy.Combat.MoveSpeed()
 			}
 			if enemy.Y >= w.wizard.Y+tolerance {
-				enemy.Dy = -enemy.MoveSpeed()
+				enemy.Dy = -enemy.Combat.MoveSpeed()
 			}
 
 			enemy.X += enemy.Dx
@@ -131,7 +131,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	cX, cY := ebiten.CursorPosition()
 	cX -= int(w.camera.X)
 	cY -= int(w.camera.Y)
-	w.wizard.BasicCombat.Update()
+	w.wizard.Combat.Update()
 
 	wizardRect := image.Rect(
 		int(w.wizard.X),
@@ -142,7 +142,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 
 	deadEnemies := make(map[int]struct{})
 	for i, enemy := range w.enemies {
-		enemy.EnemyCombat.Update()
+		enemy.Combat.Update()
 		rect := image.Rect(
 			int(enemy.X),
 			int(enemy.Y),
@@ -151,12 +151,30 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		)
 
 		if rect.Overlaps(wizardRect) {
-			if enemy.EnemyCombat.Attack() {
-				w.wizard.BasicCombat.Damage(enemy.AttackPower())
-				if w.wizard.BasicCombat.Health() <= 0 {
+			if enemy.Combat.Attack() {
+				w.wizard.Combat.Damage(enemy.Combat.AttackPower())
+				log.Printf("wiz hp: %v\n", w.wizard.Combat.Health())
+
+				// player pushed away by enemy
+				vX := w.wizard.X - enemy.X
+				vY := w.wizard.Y - enemy.Y
+				vlen := math.Sqrt(math.Pow(vX, 2) + math.Pow(vY, 2))
+				normX := vX / vlen
+				normY := vY / vlen
+
+				w.wizard.Dx = normX * shared.TileSize * enemy.Combat.Knockback()
+				w.wizard.Dy = normY * shared.TileSize * enemy.Combat.Knockback()
+
+				w.wizard.X += w.wizard.Dx
+				w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
+				shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
+
+				w.wizard.Y += w.wizard.Dy
+				w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
+				shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
+
+				if w.wizard.Combat.Health() <= 0 {
 					log.Println("YOU DIED")
-				} else {
-					//TODO: player pushed away by enemy
 				}
 			}
 		}
@@ -166,9 +184,9 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 			cY > rect.Min.Y &&
 			cY < rect.Max.Y {
 			if clicked {
-				enemy.Damage(w.wizard.AttackPower())
+				enemy.Combat.Damage(w.wizard.Combat.AttackPower())
 
-				if enemy.Health() <= 0 {
+				if enemy.Combat.Health() <= 0 {
 					deadEnemies[i] = struct{}{}
 					// TODO: player who last hit gets stat boost here
 				}

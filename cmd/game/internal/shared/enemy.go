@@ -10,7 +10,7 @@ import (
 
 type Enemy struct {
 	*Sprite
-	*EnemyCombat
+	Combat        *EnemyCombat
 	enemyType     EnemyType
 	FollowsPlayer bool
 }
@@ -48,7 +48,7 @@ func NewEnemy(enemyType EnemyType, followsPlayer bool, x, y float64) *Enemy {
 			},
 			JustJoined: false,
 		},
-		NewEnemyCombat(EnemyHealth, EnemyAttackPower, EnemyAttackCooldown, EnemyMoveSpeed, 0, 0),
+		NewEnemyCombat(EnemyHealth, EnemyAttackPower, EnemyAttackCooldown, EnemyMoveSpeed, 0, 0, EnemyKnockBack),
 		Skeleton,
 		followsPlayer,
 	}

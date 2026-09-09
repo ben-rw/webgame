@@ -20,7 +20,7 @@ type Projectile struct {
 
 type WizardPlayer struct {
 	*shared.Player
-	*shared.BasicCombat
+	Combat *shared.BasicCombat
 }
 
 type WizArena struct {
@@ -85,6 +85,7 @@ func NewWizard(player *shared.Player) *WizardPlayer {
 			shared.DefaultPlayerMoveSpeed,
 			shared.DefaultProjectileSpeed,
 			shared.DefaultProjectileSize,
+			shared.DefaultPlayerKnockback,
 		),
 	}
 }

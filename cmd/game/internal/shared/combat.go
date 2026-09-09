@@ -6,10 +6,12 @@ const (
 	DefaultPlayerMoveSpeed   = 2.0
 	DefaultProjectileSpeed   = 5.0
 	DefaultProjectileSize    = 1.0
+	DefaultPlayerKnockback   = 3.0
 	EnemyMoveSpeed           = 0.5
 	EnemyHealth              = 1.0
 	EnemyAttackPower         = 1.0
 	EnemyAttackCooldown      = 60
+	EnemyKnockBack           = 1.5
 )
 
 type Combat interface {
@@ -27,6 +29,7 @@ type BasicCombat struct {
 	moveSpeed       float64
 	projectileSpeed float64
 	projectileSize  float64
+	knockback       float64
 	attacking       bool
 }
 
@@ -66,13 +69,18 @@ func (b *BasicCombat) ProjectileSize() float64 {
 	return b.projectileSize
 }
 
-func NewBasicCombat(health, attackPower int, moveSpeed, projectileSpeed, projectileSize float64) *BasicCombat {
+func (b *BasicCombat) Knockback() float64 {
+	return b.knockback
+}
+
+func NewBasicCombat(health, attackPower int, moveSpeed, projectileSpeed, projectileSize, knockback float64) *BasicCombat {
 	return &BasicCombat{
 		health,
 		attackPower,
 		moveSpeed,
 		projectileSpeed,
 		projectileSize,
+		knockback,
 		false,
 	}
 }
@@ -96,7 +104,7 @@ func (e *EnemyCombat) Update() {
 	e.timeSinceAttack += 1
 }
 
-func NewEnemyCombat(health, attackPower, attackCooldown int, moveSpeed, projectileSpeed, projectileSize float64) *EnemyCombat {
+func NewEnemyCombat(health, attackPower, attackCooldown int, moveSpeed, projectileSpeed, projectileSize, knockback float64) *EnemyCombat {
 	return &EnemyCombat{
 		NewBasicCombat(
 			health,
@@ -104,6 +112,7 @@ func NewEnemyCombat(health, attackPower, attackCooldown int, moveSpeed, projecti
 			moveSpeed,
 			projectileSpeed,
 			projectileSize,
+			knockback,
 		),
 		attackCooldown,
 		0,
