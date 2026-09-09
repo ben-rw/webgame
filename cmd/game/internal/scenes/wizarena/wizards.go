@@ -156,6 +156,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 				log.Printf("wiz hp: %v\n", w.wizard.Combat.Health())
 
 				// player pushed away by enemy
+				// find vector, divide by vector length, add to player's velocity
 				vX := w.wizard.X - enemy.X
 				vY := w.wizard.Y - enemy.Y
 				vlen := math.Sqrt(math.Pow(vX, 2) + math.Pow(vY, 2))
@@ -188,7 +189,9 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 
 				if enemy.Combat.Health() <= 0 {
 					deadEnemies[i] = struct{}{}
-					// TODO: player who last hit gets stat boost here
+					// player who last hit the enemy gets a stat boost
+					w.wizard.Combat.RandomBoost(shared.KillEnemyBoost)
+					log.Printf("proj size: %v, proj speed %v, knockback %v", w.wizard.Combat.ProjectileSize(), w.wizard.Combat.ProjectileSpeed(), w.wizard.Combat.Knockback())
 				}
 			}
 		}
@@ -208,6 +211,11 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		float64(w.tilemapJSON.Layers[0].Width)*16.0,
 		float64(w.tilemapJSON.Layers[0].Height)*16.0,
 	)
+
+	//TODO: when 1 player is left, start a new round
+	// while preserving stat boosts.
+	// at the end of the third round, announce the winner
+	// and reload into lobby.
 
 	return nil
 }
