@@ -17,6 +17,8 @@ const (
 	Right
 	Join
 	Attack
+	Dying
+	FireballFly
 )
 
 type Sprite struct {
@@ -26,6 +28,7 @@ type Sprite struct {
 	Animations      map[EntityState]*animations.Animation
 	ActiveAnimation *animations.Animation
 	JustJoined      bool
+	Dying           bool
 }
 
 func (s *Sprite) GetActiveAnimation() *animations.Animation {
@@ -33,6 +36,14 @@ func (s *Sprite) GetActiveAnimation() *animations.Animation {
 		s.ActiveAnimation = s.Animations[Join]
 		if s.ActiveAnimation.Over == true {
 			s.JustJoined = false
+		} else {
+			return s.ActiveAnimation
+		}
+	}
+	if s.Dying {
+		s.ActiveAnimation = s.Animations[Dying]
+		if s.ActiveAnimation.Over == true {
+			s.Dying = false
 		} else {
 			return s.ActiveAnimation
 		}

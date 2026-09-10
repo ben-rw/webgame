@@ -39,6 +39,12 @@ type BasicCombat struct {
 	attacking       bool
 }
 
+type EnemyCombat struct {
+	*BasicCombat
+	attackCooldown  int
+	timeSinceAttack int
+}
+
 func (b *BasicCombat) Update() {
 }
 
@@ -111,12 +117,6 @@ func NewBasicCombat(health, attackPower int, moveSpeed, projectileSpeed, project
 		knockback,
 		false,
 	}
-}
-
-type EnemyCombat struct {
-	*BasicCombat
-	attackCooldown  int
-	timeSinceAttack int
 }
 
 func (e *EnemyCombat) Attack() bool {

@@ -1,6 +1,7 @@
 package wizarena
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -56,17 +57,32 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	w.wizard.Dx = 0
 	w.wizard.Dy = 0
 
-	if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		w.wizard.Dx = w.wizard.Combat.MoveSpeed()
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		w.wizard.Dx = -w.wizard.Combat.MoveSpeed()
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		w.wizard.Dy = -w.wizard.Combat.MoveSpeed()
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		w.wizard.Dy = w.wizard.Combat.MoveSpeed()
+	if w.wizard.Combat.Dead {
+		if ebiten.IsKeyPressed(ebiten.KeyRight) {
+			w.camera.X -= w.wizard.Combat.MoveSpeed() * 4
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+			w.camera.X += w.wizard.Combat.MoveSpeed() * 4
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyUp) {
+			w.camera.Y += w.wizard.Combat.MoveSpeed() * 4
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyDown) {
+			w.camera.Y -= w.wizard.Combat.MoveSpeed() * 4
+		}
+	} else {
+		if ebiten.IsKeyPressed(ebiten.KeyRight) {
+			w.wizard.Dx = w.wizard.Combat.MoveSpeed()
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+			w.wizard.Dx = -w.wizard.Combat.MoveSpeed()
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyUp) {
+			w.wizard.Dy = -w.wizard.Combat.MoveSpeed()
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyDown) {
+			w.wizard.Dy = w.wizard.Combat.MoveSpeed()
+		}
 	}
 
 	for _, collider := range w.colliders {
@@ -159,7 +175,9 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 				w.wizard.Dy = normY * shared.TileSize * enemy.Combat.Knockback()
 
 				if w.wizard.Combat.Health() <= 0 {
-					log.Println("YOU DIED")
+					w.wizard.Combat.Dead = true
+					// setting Dying to true plays death anim
+					w.wizard.Dying = true
 				}
 			}
 		}
@@ -175,7 +193,6 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 					deadEnemies[i] = struct{}{}
 					// player who last hit the enemy gets a stat boost
 					w.wizard.Combat.RandomBoost(shared.KillEnemyBoost)
-					log.Printf("proj size: %v, proj speed %v, knockback %v", w.wizard.Combat.ProjectileSize(), w.wizard.Combat.ProjectileSpeed(), w.wizard.Combat.Knockback())
 				}
 			}
 		}
@@ -198,7 +215,9 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
 	shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
 
-	w.camera.FollowTarget(w.wizard.X, w.wizard.Y)
+	if !w.wizard.Combat.Dead {
+		w.camera.FollowTarget(w.wizard.X, w.wizard.Y)
+	}
 	w.camera.Constrain(
 		float64(w.tilemapJSON.Layers[0].Width)*16.0,
 		float64(w.tilemapJSON.Layers[0].Height)*16.0,
@@ -207,7 +226,6 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	if !w.audioPlayer.IsPlaying() {
 		w.audioPlayer.SetVolume(0.2)
 		w.audioPlayer.SetBufferSize(500)
-		log.Println("starting wiz song")
 		w.audioPlayer.Play()
 	}
 
@@ -344,13 +362,58 @@ func (w *WizArena) Draw(screen *ebiten.Image) {
 		textOpts.GeoM.Reset()
 	}
 
-	waitText := "Shoot zombies for power-ups! Shoot your friends for glory!"
+	instructionText := "You need more POWER! Get it from chests, skeletons, and your friends!"
 	textOpts := text.DrawOptions{
 		LayoutOptions: text.LayoutOptions{
-			PrimaryAlign: text.AlignEnd,
+			PrimaryAlign: text.AlignCenter,
 		},
 	}
-	textOpts.GeoM.Translate(shared.BottomRight())
+	textOpts.GeoM.Translate(shared.TopCenter())
+	text.Draw(screen, instructionText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 
-	text.Draw(screen, waitText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+	textOpts.GeoM.Reset()
+
+	stat1text := fmt.Sprintf("Fireball Size: %v", w.wizard.Combat.ProjectileSize())
+	textOpts = text.DrawOptions{
+		LayoutOptions: text.LayoutOptions{
+			PrimaryAlign: text.AlignStart,
+		},
+	}
+	textOpts.GeoM.Translate(shared.Stat1BottomLeft())
+	text.Draw(screen, stat1text, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+
+	textOpts.GeoM.Reset()
+
+	stat2text := fmt.Sprintf("Fireball Speed: %v", w.wizard.Combat.ProjectileSpeed())
+	textOpts = text.DrawOptions{
+		LayoutOptions: text.LayoutOptions{
+			PrimaryAlign: text.AlignStart,
+		},
+	}
+	textOpts.GeoM.Translate(shared.Stat2BottomLeft())
+	text.Draw(screen, stat2text, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+
+	textOpts.GeoM.Reset()
+
+	stat3text := fmt.Sprintf("F.B. Knockback: %v", w.wizard.Combat.Knockback())
+	textOpts = text.DrawOptions{
+		LayoutOptions: text.LayoutOptions{
+			PrimaryAlign: text.AlignStart,
+		},
+	}
+	textOpts.GeoM.Translate(shared.Stat3BottomLeft())
+	text.Draw(screen, stat3text, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+
+	textOpts.GeoM.Reset()
+
+	if w.wizard.Combat.Dead {
+		deadText := "YOU DIED"
+		textOpts = text.DrawOptions{
+			LayoutOptions: text.LayoutOptions{
+				PrimaryAlign: text.AlignCenter,
+			},
+		}
+		textOpts.GeoM.Translate(shared.Center())
+		text.Draw(screen, deadText, &text.GoTextFace{Source: shared.FontSrc, Size: 24}, &textOpts)
+	}
 }

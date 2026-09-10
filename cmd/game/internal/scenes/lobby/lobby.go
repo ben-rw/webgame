@@ -87,7 +87,6 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		l.sceneChanging = true
 	}
 
-	log.Printf("volume: %v", l.audioPlayer.Volume())
 	var fadeFinished = false
 	if l.sceneChanging == true {
 		fadeFinished = sound.FadeOut(l.audioPlayer)
