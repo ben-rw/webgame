@@ -19,10 +19,11 @@ const songPath = "assets/audio/music/amalfi-coast-loop.ogg"
 
 type Lobby struct {
 	shared.Roster
-	Conn        *ws.Connection
-	Sprites     []*shared.Sprite
-	Background  *ebiten.Image
-	audioPlayer *audio.Player
+	Conn          *ws.Connection
+	Sprites       []*shared.Sprite
+	Background    *ebiten.Image
+	audioPlayer   *audio.Player
+	sceneChanging bool
 }
 
 func NewLobby(c *ws.Connection) *Lobby {
@@ -41,10 +42,11 @@ func NewLobby(c *ws.Connection) *Lobby {
 			Players: map[string]*shared.Player{},
 			Player:  shared.NewPlayer(&protocol.PlayerData{}, 0),
 		},
-		Conn:        c,
-		Sprites:     []*shared.Sprite{},
-		Background:  bg,
-		audioPlayer: audioPlayer,
+		Conn:          c,
+		Sprites:       []*shared.Sprite{},
+		Background:    bg,
+		audioPlayer:   audioPlayer,
+		sceneChanging: false,
 	}
 }
 
@@ -75,23 +77,30 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) &&
-		l.Player.Data.Host == true {
-		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
-			SceneType: protocol.RandomScene,
-		})
-		go sound.FadeOut(l.audioPlayer)
-	}
-
 	for _, player := range l.Players {
 		player.ActiveAnimation = player.GetActiveAnimation()
 		player.ActiveAnimation.Update()
 	}
 
-	if !l.audioPlayer.IsPlaying() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) &&
+		l.Player.Data.Host == true {
+		l.sceneChanging = true
+	}
+
+	log.Printf("volume: %v", l.audioPlayer.Volume())
+	var fadeFinished = false
+	if l.sceneChanging == true {
+		fadeFinished = sound.FadeOut(l.audioPlayer)
+	} else if !l.audioPlayer.IsPlaying() {
 		l.audioPlayer.SetVolume(0.2)
 		l.audioPlayer.SetBufferSize(500)
 		l.audioPlayer.Play()
+	}
+
+	if fadeFinished {
+		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
+			SceneType: protocol.RandomScene,
+		})
 	}
 
 	return nil

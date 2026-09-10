@@ -207,6 +207,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	if !w.audioPlayer.IsPlaying() {
 		w.audioPlayer.SetVolume(0.2)
 		w.audioPlayer.SetBufferSize(500)
+		log.Println("starting wiz song")
 		w.audioPlayer.Play()
 	}
 
