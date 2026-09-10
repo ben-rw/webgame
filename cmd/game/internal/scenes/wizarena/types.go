@@ -3,6 +3,7 @@ package wizarena
 import (
 	"image"
 	"log"
+	"math/rand"
 
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/ben-rw/webgame/cmd/game/internal/shared/sound"
@@ -10,10 +11,12 @@ import (
 	"github.com/ben-rw/webgame/internal/protocol"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
 	tilemapPath = "assets/maps/ninja_dungeon.json"
+	heartPath   = "assets/images/ninja_adventure/Ui/Receptacle/IconHeart.png"
 	songPath    = "assets/audio/music/void-construct-loop.ogg"
 	introLen    = 3
 )
@@ -21,11 +24,6 @@ const (
 type WizardPlayer struct {
 	*shared.Player
 	Combat *WizardCombat
-}
-
-type WizardCombat struct {
-	*shared.BasicCombat
-	Dead bool
 }
 
 type WizArena struct {
@@ -40,8 +38,9 @@ type WizArena struct {
 	camera          *shared.Camera
 	colliders       []image.Rectangle
 	audioPlayer     *audio.Player
-	projectiles     map[shared.ProjectileType]*shared.Projectile
+	projectiles     []*shared.Projectile
 	projectileCache map[shared.ProjectileType]*ebiten.Image
+	heartImage      *ebiten.Image
 }
 
 func NewWizArena(c *ws.Connection) *WizArena {
@@ -69,6 +68,11 @@ func NewWizArena(c *ws.Connection) *WizArena {
 		log.Printf("couldn't load projectile image: %v", err)
 	}
 
+	heartImg, _, err := ebitenutil.NewImageFromFileSystem(shared.AssetsFS, heartPath)
+	if err != nil {
+		log.Printf("couldn't load image: %v", err)
+	}
+
 	w := &WizArena{
 		Roster: shared.Roster{
 			Players: make(map[string]*shared.Player, 8),
@@ -78,7 +82,7 @@ func NewWizArena(c *ws.Connection) *WizArena {
 		Sprites:         []*shared.Sprite{},
 		wizards:         make(map[string]*WizardPlayer, 0),
 		enemies:         make([]*shared.Enemy, 0),
-		projectiles:     make(map[shared.ProjectileType]*shared.Projectile, 0),
+		projectiles:     make([]*shared.Projectile, 0),
 		projectileCache: make(map[shared.ProjectileType]*ebiten.Image, 0),
 		tilemapJSON:     tilemap,
 		tileCache:       tileCache,
@@ -87,6 +91,7 @@ func NewWizArena(c *ws.Connection) *WizArena {
 			image.Rect(100, 100, 116, 116),
 		},
 		audioPlayer: audioPlayer,
+		heartImage:  heartImg,
 	}
 
 	w.enemies = append(w.enemies, shared.NewEnemy(shared.Skeleton, true, 400, 300))
@@ -109,6 +114,33 @@ func NewWizArena(c *ws.Connection) *WizArena {
 	return w
 }
 
+type WizardCombat struct {
+	*shared.BasicCombat
+	attackRange float64
+	Dead        bool
+}
+
+const defaultAttackRange = 60 //determines how many ticks projectile will persist
+
+func (wc *WizardCombat) AttackRange() float64 {
+	return wc.attackRange
+}
+
+func (wc *WizardCombat) BoostAttackRange(amount float64) {
+	wc.attackRange += amount
+}
+
+func (wc *WizardCombat) RandomBoost(amount float64) {
+	boosts := map[int]func(amount float64){
+		0: wc.BoostProjectileSpeed,
+		1: wc.BoostProjectileSize,
+		2: wc.BoostKnockback,
+		3: wc.BoostAttackRange,
+	}
+
+	boosts[rand.Intn(len(boosts))](amount)
+}
+
 func NewWizard(player *shared.Player) *WizardPlayer {
 	return &WizardPlayer{
 		player,
@@ -121,6 +153,7 @@ func NewWizard(player *shared.Player) *WizardPlayer {
 				shared.DefaultProjectileSize,
 				shared.DefaultPlayerKnockback,
 			),
+			defaultAttackRange,
 			false,
 		},
 	}
