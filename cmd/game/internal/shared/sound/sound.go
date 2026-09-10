@@ -3,6 +3,7 @@ package sound
 import (
 	"bytes"
 	"io"
+	"time"
 
 	"github.com/ben-rw/webgame/cmd/game/internal/shared"
 	"github.com/hajimehoshi/ebiten/v2/audio"
@@ -37,4 +38,12 @@ func NewAudioPlayer(filepath string, loop bool, introLen int64) (*audio.Player, 
 	audioPlayer, err := audioContext.NewPlayer(s)
 
 	return audioPlayer, nil
+}
+
+func FadeOut(audioPlayer *audio.Player) {
+	for audioPlayer.Volume() > 0.0 {
+		time.Sleep(time.Millisecond * 10)
+		audioPlayer.SetVolume(audioPlayer.Volume() - 0.005)
+	}
+	audioPlayer.Close()
 }

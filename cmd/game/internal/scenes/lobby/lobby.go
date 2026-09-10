@@ -10,7 +10,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"time"
 
 	"log"
 )
@@ -81,14 +80,7 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		l.Conn.WriteMsg(protocol.SceneChange, protocol.SceneChangeData{
 			SceneType: protocol.RandomScene,
 		})
-		go func() {
-			for l.audioPlayer.Volume() > 0.0 {
-				time.Sleep(time.Millisecond * 10)
-				l.audioPlayer.SetVolume(l.audioPlayer.Volume() - 0.005)
-				log.Println(l.audioPlayer.Volume())
-			}
-			l.audioPlayer.Close()
-		}()
+		go sound.FadeOut(l.audioPlayer)
 	}
 
 	for _, player := range l.Players {
@@ -96,9 +88,11 @@ func (l *Lobby) Update(messages []protocol.Message) error {
 		player.ActiveAnimation.Update()
 	}
 
-	l.audioPlayer.SetVolume(0.2)
-	l.audioPlayer.SetBufferSize(500)
-	l.audioPlayer.Play()
+	if !l.audioPlayer.IsPlaying() {
+		l.audioPlayer.SetVolume(0.2)
+		l.audioPlayer.SetBufferSize(500)
+		l.audioPlayer.Play()
+	}
 
 	return nil
 }
