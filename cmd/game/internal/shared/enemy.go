@@ -23,7 +23,6 @@ const (
 
 func NewEnemy(enemyType EnemyType, followsPlayer bool, x, y float64) *Enemy {
 	imgPath := EnemySpriteIndex[0]
-	log.Println(imgPath)
 	enemyImg, _, err := ebitenutil.NewImageFromFileSystem(AssetsFS, imgPath)
 	if err != nil {
 		log.Fatal(err)
@@ -36,7 +35,7 @@ func NewEnemy(enemyType EnemyType, followsPlayer bool, x, y float64) *Enemy {
 			Y:           y,
 			Dx:          0,
 			Dy:          0,
-			SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize),
+			SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize, TileSize),
 			Animations: map[EntityState]*animations.Animation{
 				Up:     animations.NewAnimation(5, 13, 4, 20.0),
 				Down:   animations.NewAnimation(4, 12, 4, 20.0),
