@@ -385,7 +385,10 @@ func (w *WizArena) Draw(screen *ebiten.Image) {
 	}
 
 	for _, projectile := range w.projectiles {
+		opts.GeoM.Translate(projectile.CenterX, projectile.CenterY)
+
 		opts.GeoM.Scale(0.5, 0.5)
+		opts.GeoM.Rotate(projectile.Rotation)
 
 		opts.GeoM.Translate(projectile.X, projectile.Y)
 		opts.GeoM.Translate(w.camera.X, w.camera.Y)

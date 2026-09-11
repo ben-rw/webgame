@@ -11,6 +11,7 @@ import (
 )
 
 const TileSize = 16
+const HalfTile = 8
 
 type Tile struct {
 	Img   *ebiten.Image

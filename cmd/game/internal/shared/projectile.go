@@ -5,7 +5,6 @@ import (
 	"github.com/ben-rw/webgame/cmd/game/internal/shared/spritesheet"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"log"
 	"math"
 )
 
@@ -34,6 +33,9 @@ type Projectile struct {
 	Size        float64
 	Knockback   float64
 	TicksToLive float64
+	Rotation    float64
+	CenterX     float64
+	CenterY     float64
 }
 
 func LoadProjectile(projectileType ProjectileType) (*ebiten.Image, error) {
@@ -47,14 +49,13 @@ func LoadProjectile(projectileType ProjectileType) (*ebiten.Image, error) {
 func SpawnProjectile(img *ebiten.Image, speed, size, knockback, ticksToLive, playerX, playerY, cursorX, cursorY float64) *Projectile {
 	vX := cursorX - playerX
 	vY := cursorY - playerY
-	vlen := math.Sqrt(math.Pow(vX, 2) + math.Pow(vY, 2))
+	vlen := math.Hypot(vX, vY)
 	if vlen == 0 {
 		return &Projectile{}
 	}
 	normX := vX / vlen
 	normY := vY / vlen
-
-	log.Println(normX, normY)
+	rotation := math.Atan2(vY, vX)
 
 	s := spritesheet.NewSpriteSheet(FireballWidthInTiles, FireballHeightInTiles, FireballWidth, FireballHeight)
 	anim := animations.NewAnimation(0, 5, 1, FireballAnimSpeed)
@@ -62,8 +63,8 @@ func SpawnProjectile(img *ebiten.Image, speed, size, knockback, ticksToLive, pla
 	return &Projectile{
 		&Sprite{
 			Img:         img,
-			X:           playerX + normX*TileSize,
-			Y:           playerY + normY*TileSize,
+			X:           playerX + HalfTile + normX*HalfTile,
+			Y:           playerY + HalfTile + normY*HalfTile,
 			Dx:          normX * speed,
 			Dy:          normY * speed,
 			SpriteSheet: s,
@@ -76,6 +77,9 @@ func SpawnProjectile(img *ebiten.Image, speed, size, knockback, ticksToLive, pla
 		size,
 		knockback,
 		ticksToLive,
+		rotation,
+		-FireballWidth / 2,
+		-FireballHeight / 2,
 	}
 }
 
