@@ -153,6 +153,41 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 	cY -= int(w.camera.Y)
 	w.wizard.Combat.Update()
 
+	if clicked && !w.wizard.Combat.Dead {
+		projectile := shared.SpawnProjectile(
+			w.projectileCache[shared.Fireball],
+			w.wizard.Combat.ProjectileSpeed(),
+			w.wizard.Combat.ProjectileSize(),
+			w.wizard.Combat.Knockback(),
+			w.wizard.Combat.AttackRange(),
+			w.wizard.X,
+			w.wizard.Y,
+			float64(cX),
+			float64(cY),
+		)
+		w.projectiles = append(w.projectiles, projectile)
+		log.Println(w.projectiles)
+	}
+
+	deadProjectiles := make(map[int]struct{})
+	for i, projectile := range w.projectiles {
+		projectile.Update()
+		projectile.ActiveAnimation.Update()
+		if projectile.TicksToLive < 1 {
+			deadProjectiles[i] = struct{}{}
+		}
+	}
+
+	if len(deadProjectiles) > 0 {
+		newProjectiles := make([]*shared.Projectile, 0)
+		for i, projectile := range w.projectiles {
+			if _, ok := deadProjectiles[i]; !ok {
+				newProjectiles = append(newProjectiles, projectile)
+			}
+		}
+		w.projectiles = newProjectiles
+	}
+
 	wizardRect := image.Rect(
 		int(w.wizard.X),
 		int(w.wizard.Y),
@@ -237,7 +272,7 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 
 	if !w.audioPlayer.IsPlaying() {
 		w.audioPlayer.SetVolume(0.2)
-		w.audioPlayer.SetBufferSize(500)
+		w.audioPlayer.SetBufferSize(300)
 		w.audioPlayer.Play()
 	}
 
@@ -361,6 +396,31 @@ func (w *WizArena) Draw(screen *ebiten.Image) {
 		opts.GeoM.Reset()
 	}
 
+	for _, projectile := range w.projectiles {
+		opts.GeoM.Translate(projectile.CenterX, projectile.CenterY)
+
+		opts.GeoM.Scale(0.5, 0.5)
+		opts.GeoM.Rotate(projectile.Rotation)
+
+		opts.GeoM.Translate(projectile.X, projectile.Y)
+		opts.GeoM.Translate(w.camera.X, w.camera.Y)
+
+		screen.DrawImage(
+			projectile.Img.SubImage(
+				projectile.SpriteSheet.Rect(projectile.ActiveAnimation.Frame()),
+			).(*ebiten.Image),
+			&opts,
+		)
+	}
+
+	opts.GeoM.Reset()
+
+	for i := range w.wizard.Combat.Health() {
+		opts.GeoM.Translate(HealthHeartLocations[i]())
+		screen.DrawImage(w.heartImage, &opts)
+		opts.GeoM.Reset()
+	}
+
 	for _, wizard := range w.wizards {
 		textOpts := text.DrawOptions{
 			LayoutOptions: wizard.NameTag.LayoutOptions,
@@ -374,14 +434,25 @@ func (w *WizArena) Draw(screen *ebiten.Image) {
 		textOpts.GeoM.Reset()
 	}
 
-	instructionText := "You need more POWER! Get it from chests, skeletons, and your friends!"
+	instructionText1 := "You need more POWER!"
 	textOpts := text.DrawOptions{
 		LayoutOptions: text.LayoutOptions{
-			PrimaryAlign: text.AlignCenter,
+			PrimaryAlign: text.AlignEnd,
 		},
 	}
-	textOpts.GeoM.Translate(shared.TopCenter())
-	text.Draw(screen, instructionText, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+	textOpts.GeoM.Translate(shared.TopRightFurther())
+	text.Draw(screen, instructionText1, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
+
+	textOpts.GeoM.Reset()
+
+	instructionText2 := "Get boosts from chests, skeletons, and your friends!"
+	textOpts = text.DrawOptions{
+		LayoutOptions: text.LayoutOptions{
+			PrimaryAlign: text.AlignEnd,
+		},
+	}
+	textOpts.GeoM.Translate(shared.BottomRightFurther())
+	text.Draw(screen, instructionText2, &text.GoTextFace{Source: shared.FontSrc, Size: 8}, &textOpts)
 
 	textOpts.GeoM.Reset()
 

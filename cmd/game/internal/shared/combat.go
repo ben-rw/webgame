@@ -1,12 +1,10 @@
 package shared
 
-import "math/rand"
-
 const (
 	DefaultPlayerHealth      = 3.0
 	DefaultPlayerAttackPower = 1.0
 	DefaultPlayerMoveSpeed   = 2.0
-	DefaultProjectileSpeed   = 5.0
+	DefaultProjectileSpeed   = 3.0
 	DefaultProjectileSize    = 1.0
 	DefaultPlayerKnockback   = 3.0
 	EnemyMoveSpeed           = 0.5
@@ -95,16 +93,6 @@ func (b *BasicCombat) Knockback() float64 {
 
 func (b *BasicCombat) BoostKnockback(amount float64) {
 	b.knockback += amount
-}
-
-func (b *BasicCombat) RandomBoost(amount float64) {
-	boosts := map[int]func(amount float64){
-		0: b.BoostProjectileSpeed,
-		1: b.BoostProjectileSize,
-		2: b.BoostKnockback,
-	}
-
-	boosts[rand.Intn(len(boosts))](amount)
 }
 
 func NewBasicCombat(health, attackPower int, moveSpeed, projectileSpeed, projectileSize, knockback float64) *BasicCombat {

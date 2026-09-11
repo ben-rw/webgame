@@ -65,7 +65,7 @@ func NewPlayer(data *protocol.PlayerData, joinOrder int) *Player {
 			Y:           startPosition.Y,
 			Dx:          0,
 			Dy:          0,
-			SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize),
+			SpriteSheet: spritesheet.NewSpriteSheet(4, 7, TileSize, TileSize),
 			Animations: map[EntityState]*animations.Animation{
 				Up:     animations.NewAnimation(5, 13, 4, 20.0),
 				Down:   animations.NewAnimation(4, 12, 4, 20.0),

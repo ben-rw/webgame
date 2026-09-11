@@ -7,18 +7,19 @@ import (
 type SpriteSheet struct {
 	WidthInTiles  int
 	HeightInTiles int
-	Tilesize      int
+	TileWidth     int
+	TileHeight    int
 }
 
-func NewSpriteSheet(w, h, t int) *SpriteSheet {
+func NewSpriteSheet(w, h, tw, th int) *SpriteSheet {
 	return &SpriteSheet{
-		w, h, t,
+		w, h, tw, th,
 	}
 }
 
 func (s *SpriteSheet) Rect(index int) image.Rectangle {
-	x := (index % s.WidthInTiles) * s.Tilesize
-	y := (index / s.WidthInTiles) * s.Tilesize
+	x := (index % s.WidthInTiles) * s.TileWidth
+	y := (index / s.WidthInTiles) * s.TileHeight
 
-	return image.Rect(x, y, x+s.Tilesize, y+s.Tilesize)
+	return image.Rect(x, y, x+s.TileWidth, y+s.TileHeight)
 }
