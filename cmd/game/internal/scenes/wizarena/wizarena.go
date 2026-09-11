@@ -72,16 +72,16 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		}
 	} else {
 		if ebiten.IsKeyPressed(ebiten.KeyRight) {
-			w.wizard.Dx = 1
+			w.wizard.Dx += 1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-			w.wizard.Dx = -1
+			w.wizard.Dx += -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyUp) {
-			w.wizard.Dy = -1
+			w.wizard.Dy += -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyDown) {
-			w.wizard.Dy = 1
+			w.wizard.Dy += 1
 		}
 
 		//normalize diagonal movement
