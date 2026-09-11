@@ -2,6 +2,8 @@ package shared
 
 import "math"
 
+const FreeCamSpeed = 10
+
 type Camera struct {
 	X, Y float64
 }

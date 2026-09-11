@@ -59,29 +59,35 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 
 	if w.wizard.Combat.Dead {
 		if ebiten.IsKeyPressed(ebiten.KeyRight) {
-			w.camera.X -= w.wizard.Combat.MoveSpeed() * 4
+			w.camera.X -= shared.FreeCamSpeed
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-			w.camera.X += w.wizard.Combat.MoveSpeed() * 4
+			w.camera.X += shared.FreeCamSpeed
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyUp) {
-			w.camera.Y += w.wizard.Combat.MoveSpeed() * 4
+			w.camera.Y += shared.FreeCamSpeed
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyDown) {
-			w.camera.Y -= w.wizard.Combat.MoveSpeed() * 4
+			w.camera.Y -= shared.FreeCamSpeed
 		}
 	} else {
 		if ebiten.IsKeyPressed(ebiten.KeyRight) {
-			w.wizard.Dx = w.wizard.Combat.MoveSpeed()
+			w.wizard.Dx = 1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-			w.wizard.Dx = -w.wizard.Combat.MoveSpeed()
+			w.wizard.Dx = -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyUp) {
-			w.wizard.Dy = -w.wizard.Combat.MoveSpeed()
+			w.wizard.Dy = -1
 		}
 		if ebiten.IsKeyPressed(ebiten.KeyDown) {
-			w.wizard.Dy = w.wizard.Combat.MoveSpeed()
+			w.wizard.Dy = 1
+		}
+
+		//normalize diagonal movement
+		if w.wizard.Dx != 0 && w.wizard.Dy != 0 {
+			w.wizard.Dx *= 0.7071
+			w.wizard.Dy *= 0.7071
 		}
 	}
 
@@ -111,21 +117,27 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		if enemy.FollowsPlayer {
 			tolerance := 1.0
 			if enemy.X <= w.wizard.X-tolerance {
-				enemy.Dx = enemy.Combat.MoveSpeed()
+				enemy.Dx = 1
 			}
 			if enemy.X >= w.wizard.X+tolerance {
-				enemy.Dx = -enemy.Combat.MoveSpeed()
+				enemy.Dx = -1
 			}
 			if enemy.Y <= w.wizard.Y-tolerance {
-				enemy.Dy = enemy.Combat.MoveSpeed()
+				enemy.Dy = 1
 			}
 			if enemy.Y >= w.wizard.Y+tolerance {
-				enemy.Dy = -enemy.Combat.MoveSpeed()
+				enemy.Dy = -1
 			}
 
-			enemy.X += enemy.Dx
+			//normalize diagonal movement
+			if enemy.Dx != 0 && enemy.Dy != 0 {
+				enemy.Dx *= 0.7071
+				enemy.Dy *= 0.7071
+			}
+
+			enemy.X += enemy.Dx * enemy.Combat.MoveSpeed()
 			shared.CheckCollisionHorizontal(enemy.Sprite, w.colliders)
-			enemy.Y += enemy.Dy
+			enemy.Y += enemy.Dy * enemy.Combat.MoveSpeed()
 			shared.CheckCollisionVertical(enemy.Sprite, w.colliders)
 		}
 	}
@@ -207,11 +219,11 @@ func (w *WizArena) Update(messages []protocol.Message) error {
 		w.enemies = newEnemies
 	}
 
-	w.wizard.X += w.wizard.Dx
+	w.wizard.X += w.wizard.Dx * w.wizard.Combat.MoveSpeed()
 	w.wizard.NameTag.X = w.wizard.X + shared.TileSize/2
 	shared.CheckCollisionHorizontal(w.wizard.Sprite, w.colliders)
 
-	w.wizard.Y += w.wizard.Dy
+	w.wizard.Y += w.wizard.Dy * w.wizard.Combat.MoveSpeed()
 	w.wizard.NameTag.Y = w.wizard.Y + shared.TileSize + 2
 	shared.CheckCollisionVertical(w.wizard.Sprite, w.colliders)
 
