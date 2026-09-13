@@ -5,13 +5,13 @@ var imgPathEnd string = "/SpriteSheet.png"
 
 var PlayerSpriteIndex map[int]string = map[int]string{
 	0: imgRootPath + "Monk" + imgPathEnd,
-	1: imgRootPath + "Inspector" + imgPathEnd,
+	1: imgRootPath + "MaskRaccoon" + imgPathEnd,
 	2: imgRootPath + "MaskFrog" + imgPathEnd,
-	3: imgRootPath + "Hunter" + imgPathEnd,
+	3: imgRootPath + "OldMan3" + imgPathEnd,
 	4: imgRootPath + "Master" + imgPathEnd,
 	5: imgRootPath + "Sultan" + imgPathEnd,
 	6: imgRootPath + "Samurai" + imgPathEnd,
-	7: imgRootPath + "Noble" + imgPathEnd,
+	7: imgRootPath + "NinjaMageBlack" + imgPathEnd,
 }
 
 var StartingPositions = map[int]struct{ X, Y float64 }{
